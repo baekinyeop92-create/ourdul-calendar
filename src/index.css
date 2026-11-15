@@ -5,7 +5,106 @@
 @layer base {
   body {
     font-family: -apple-system, BlinkMacSystemFont, "Apple SD Gothic Neo", "Pretendard", "Noto Sans KR", sans-serif;
-    padding-top: env(safe-area-inset-top);
+    padding-top: env(safe-area-inset-top{
+  "appId": "com.ourdul.couplecalendar",
+  "appName": "우리둘 캘린더",
+  "webDir": "dist",
+  "bundledWebRuntime": false,
+  "server": {
+    "androidScheme": "https"
+  }
+}
+<!doctype html>
+<html lang="ko" class="dark">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+    <title>우리둘 캘린더</title>
+    <link rel="manifest" href="/manifest.json" />
+    <link rel="icon" type="image/png" href="/icon-192.png" />
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+    <meta name="theme-color" content="#09090B" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta name="apple-mobile-web-app-title" content="우리둘" />
+  </head>
+  <body class="bg-zinc-950 text-zinc-100 antialiased selection:bg-rose-500/30 selection:text-rose-200">
+    <div id="root"></div>
+    <script type="module" src="/src/main.jsx"></script>
+  </body>
+</html>
+
+{
+  "name": "our-couple-calendar",
+  "private": true,
+  "version": "1.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "lucide-react": "^0.460.0",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1"
+  },
+  "devDependencies": {
+    "@vitejs/plugin-react": "^4.3.4",
+    "autoprefixer": "^10.4.20",
+    "postcss": "^8.4.49",
+    "tailwindcss": "^3.4.15",
+    "vite": "^6.0.1"
+  }
+}
+export default {
+  plugins: {
+    tailwindcss: {},
+    autoprefixer: {}
+  }
+};
+
+# 우리둘 캘린더 (AOS · iOS 설치형 커플 캘린더 패키지)
+
+이 패키지는 안드로이드(AOS)와 아이폰(iOS) 모두에서 **앱으로 다운로드하여 설치**할 수 있도록 구성된 풀소스 프로젝트입니다.
+
+## 방법 1. 3분 만에 배포 후 AOS · iOS 동시 앱 설치 (가장 추천 / 무료)
+1. [Vercel](https://vercel.com) 또는 [Cloudflare Pages](https://pages.cloudflare.com)에 무료 가입 후 이 폴더를 업로드(또는 GitHub 연동)합니다.
+2. 생성된 `https://...` 주소로 두 사람의 스마트폰에서 접속합니다.
+3. **남자친구 (AOS / 갤럭시)**: Chrome 브라우저 우측 상단 `⋮` → **[앱 설치]** 또는 **[홈 화면에 추가]** 터치
+4. **여자친구 (iOS / 아이폰)**: Safari 브라우저 하단 `공유(□↑)` → **[홈 화면에 추가]** 터치
+
+## 방법 2. 네이티브 설치 파일(.apk / iOS Xcode) 직접 추출
+- **안드로이드 `.apk` 자동 생성**: 이 프로젝트를 GitHub에 올리면 `.github/workflows/build-android-apk.yml`이 자동 실행되어 `app-debug.apk` 파일을 다운로드할 수 있습니다.
+- **아이폰 직접 설치 (Mac 보유 시)**:
+  ```bash
+  npm install
+  npm run build
+  npm install @capacitor/core @capacitor/cli @capacitor/ios
+  npx cap add ios
+  npx cap open ios
+  ```
+  Xcode가 열리면 아이폰을 케이블로 연결하고 상단 `▶(Run)` 버튼을 누르면 아이폰에 앱이 직접 설치됩니다.
+
+/** @type {import('tailwindcss').Config} */
+export default {
+  content: ['./index.html', './src/**/*.{js,ts,jsx,tsx}'],
+  theme: {
+    extend: {}
+  },
+  plugins: []
+};
+
+import { defineConfig } from 'vite';
+import react from '@vitejs/plugin-react';
+
+export default defineConfig({
+  plugins: [react()],
+  server: {
+    host: true
+  }
+});
+);
     padding-bottom: env(safe-area-inset-bottom);
   }
 }
