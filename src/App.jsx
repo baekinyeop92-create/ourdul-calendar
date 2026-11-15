@@ -59,67 +59,22 @@ const COUPLE_ROOM_ID = 'ttotto-ttuttu-shared';
 
 // 대한민국 법정공휴일 및 대체공휴일 (2025 ~ 2027)
 const KOREAN_HOLIDAYS = {
-  // 2025
-  '2025-01-01': '신정',
-  '2025-01-28': '설날 연휴',
-  '2025-01-29': '설날',
-  '2025-01-30': '설날 연휴',
-  '2025-03-01': '삼일절',
-  '2025-03-03': '대체공휴일',
-  '2025-05-05': '어린이날',
-  '2025-05-06': '대체공휴일',
-  '2025-06-06': '현충일',
-  '2025-08-15': '광복절',
-  '2025-10-03': '개천절',
-  '2025-10-05': '추석 연휴',
-  '2025-10-06': '추석',
-  '2025-10-07': '추석 연휴',
-  '2025-10-08': '대체공휴일',
-  '2025-10-09': '한글날',
-  '2025-12-25': '성탄절',
-  // 2026
-  '2026-01-01': '신정',
-  '2026-02-16': '설날 연휴',
-  '2026-02-17': '설날',
-  '2026-02-18': '설날 연휴',
-  '2026-03-01': '삼일절',
-  '2026-03-02': '대체공휴일',
-  '2026-05-05': '어린이날',
-  '2026-05-24': '부처님오신날',
-  '2026-05-25': '대체공휴일',
-  '2026-06-06': '현충일',
-  '2026-08-15': '광복절',
-  '2026-08-17': '대체공휴일',
-  '2026-09-24': '추석 연휴',
-  '2026-09-25': '추석',
-  '2026-09-26': '추석 연휴',
-  '2026-10-03': '개천절',
-  '2026-10-05': '대체공휴일',
-  '2026-10-09': '한글날',
-  '2026-12-25': '성탄절',
-  // 2027
-  '2027-01-01': '신정',
-  '2027-02-06': '설날 연휴',
-  '2027-02-07': '설날',
-  '2027-02-08': '설날 연휴',
-  '2027-02-09': '대체공휴일',
-  '2027-03-01': '삼일절',
-  '2027-05-05': '어린이날',
-  '2027-05-13': '부처님오신날',
-  '2027-06-06': '현충일',
-  '2027-08-15': '광복절',
-  '2027-08-16': '대체공휴일',
-  '2027-09-14': '추석 연휴',
-  '2027-09-15': '추석',
-  '2027-09-16': '추석 연휴',
-  '2027-10-03': '개천절',
-  '2027-10-04': '대체공휴일',
-  '2027-10-09': '한글날',
-  '2027-10-11': '대체공휴일',
-  '2027-12-25': '성탄절'
+  '2025-01-01': '신정', '2025-01-28': '설날 연휴', '2025-01-29': '설날', '2025-01-30': '설날 연휴',
+  '2025-03-01': '삼일절', '2025-03-03': '대체공휴일', '2025-05-05': '어린이날', '2025-05-06': '대체공휴일',
+  '2025-06-06': '현충일', '2025-08-15': '광복절', '2025-10-03': '개천절', '2025-10-05': '추석 연휴',
+  '2025-10-06': '추석', '2025-10-07': '추석 연휴', '2025-10-08': '대체공휴일', '2025-10-09': '한글날', '2025-12-25': '성탄절',
+  '2026-01-01': '신정', '2026-02-16': '설날 연휴', '2026-02-17': '설날', '2026-02-18': '설날 연휴',
+  '2026-03-01': '삼일절', '2026-03-02': '대체공휴일', '2026-05-05': '어린이날', '2026-05-24': '부처님오신날',
+  '2026-05-25': '대체공휴일', '2026-06-06': '현충일', '2026-08-15': '광복절', '2026-08-17': '대체공휴일',
+  '2026-09-24': '추석 연휴', '2026-09-25': '추석', '2026-09-26': '추석 연휴', '2026-10-03': '개천절',
+  '2026-10-05': '대체공휴일', '2026-10-09': '한글날', '2026-12-25': '성탄절',
+  '2027-01-01': '신정', '2027-02-06': '설날 연휴', '2027-02-07': '설날', '2027-02-08': '설날 연휴',
+  '2027-02-09': '대체공휴일', '2027-03-01': '삼일절', '2027-05-05': '어린이날', '2027-05-13': '부처님오신날',
+  '2027-06-06': '현충일', '2027-08-15': '광복절', '2027-08-16': '대체공휴일', '2027-09-14': '추석 연휴',
+  '2027-09-15': '추석', '2027-09-16': '추석 연휴', '2027-10-03': '개천절', '2027-10-04': '대체공휴일',
+  '2027-10-09': '한글날', '2027-10-11': '대체공휴일', '2027-12-25': '성탄절'
 };
 
-// 주체자 구분: 또또 / 뚜뚜 / 함께
 const SUBJECT_META = {
   boyfriend: {
     label: '또또',
@@ -155,16 +110,14 @@ export default function App() {
   const today = useMemo(() => new Date(), []);
   const todayKey = formatDateKey(today);
 
-  const [activeTab, setActiveTab] = useState('calendar'); // calendar | wishlist | memories | install
+  const [activeTab, setActiveTab] = useState('calendar');
   const [currentUser, setCurrentUser] = useState(() => localStorage.getItem('couple_current_user') || 'boyfriend');
   const [viewDate, setViewDate] = useState(new Date(today.getFullYear(), today.getMonth(), 1));
   const [selectedDate, setSelectedDate] = useState(todayKey);
   const [filterCategory, setFilterCategory] = useState('all');
   const [syncConnected, setSyncConnected] = useState(false);
 
-  // States (Firebase 연결 시 실시간 구독, 미연결 시 localStorage 폴백)
   const [events, setEvents] = useState(() => {
-    if (db) return [];
     const saved = localStorage.getItem('couple_events_v1');
     return saved ? JSON.parse(saved) : [];
   });
@@ -172,12 +125,7 @@ export default function App() {
   const [wishes, setWishes] = useState(() => {
     if (db) return [];
     const saved = localStorage.getItem('couple_wishes_v1');
-    return saved
-      ? JSON.parse(saved)
-      : [
-          { id: 'w1', title: '한강 피크닉 & 치맥', location: '여의도 한강공원', tag: '데이트', author: 'girlfriend' },
-          { id: 'w2', title: '주말 근교 드라이브 카페', location: '남양주 북한강', tag: '드라이브', author: 'boyfriend' }
-        ];
+    return saved ? JSON.parse(saved) : [];
   });
 
   const [startDate, setStartDate] = useState(() => localStorage.getItem('couple_start_date') || '2025-05-01');
@@ -187,7 +135,6 @@ export default function App() {
     return saved ? JSON.parse(saved) : [];
   });
 
-  // Modals & Inputs
   const [showAddModal, setShowAddModal] = useState(false);
   const [showNotifModal, setShowNotifModal] = useState(false);
   const [newTitle, setNewTitle] = useState('');
@@ -199,7 +146,6 @@ export default function App() {
   const [newMemTitle, setNewMemTitle] = useState('');
   const [newMemNote, setNewMemNote] = useState('');
 
-  // PWA Install Prompt
   const [deferredPrompt, setDeferredPrompt] = useState(null);
   const [toastMsg, setToastMsg] = useState('');
 
@@ -208,23 +154,43 @@ export default function App() {
     setTimeout(() => setToastMsg(''), 3000);
   };
 
-  // 현재 기기 사용자(또또/뚜뚜) 저장
   useEffect(() => {
     localStorage.setItem('couple_current_user', currentUser);
   }, [currentUser]);
 
-  // Firebase Firestore 실시간 양방향 구독 (또또 AOS <-> 뚜뚜 iOS)
+  // Firebase Firestore 실시간 구독 + 기존 로컬 일정 자동 업로드 복구
   useEffect(() => {
     if (!db) return;
 
     const eventsRef = collection(db, 'couples', COUPLE_ROOM_ID, 'events');
     const unsubEvents = onSnapshot(
       eventsRef,
-      (snapshot) => {
+      async (snapshot) => {
         const list = snapshot.docs.map((d) => ({ id: d.id, ...d.data() }));
         list.sort((a, b) => (a.time || '').localeCompare(b.time || ''));
         setEvents(list);
         setSyncConnected(true);
+
+        // 기기 내부(localStorage)에 남아 있던 기존 일정을 1회 자동 서버 업로드
+        if (localStorage.getItem('couple_events_migrated_v1') !== 'true') {
+          localStorage.setItem('couple_events_migrated_v1', 'true');
+          const localSaved = localStorage.getItem('couple_events_v1');
+          if (localSaved) {
+            try {
+              const parsed = JSON.parse(localSaved);
+              if (Array.isArray(parsed) && parsed.length > 0) {
+                for (const ev of parsed) {
+                  if (ev && ev.id && ev.title) {
+                    await setDoc(doc(db, 'couples', COUPLE_ROOM_ID, 'events', String(ev.id)), ev, { merge: true });
+                  }
+                }
+                showToast(`기존 기기 일정 ${parsed.length}건을 클라우드로 복구했습니다!`);
+              }
+            } catch (e) {
+              console.error('기존 일정 마이그레이션 오류:', e);
+            }
+          }
+        }
       },
       (error) => {
         console.error('일정 동기화 오류:', error);
@@ -260,7 +226,6 @@ export default function App() {
     };
   }, []);
 
-  // 로컬 폴백 저장 (Firebase 미연결 시에만 동작)
   useEffect(() => {
     if (!db) localStorage.setItem('couple_events_v1', JSON.stringify(events));
   }, [events]);
@@ -286,14 +251,12 @@ export default function App() {
     return () => window.removeEventListener('beforeinstallprompt', handler);
   }, []);
 
-  // D-Day Calculation
   const dDayCount = useMemo(() => {
     const s = new Date(startDate);
     const diff = Math.floor((new Date(todayKey) - s) / (1000 * 60 * 60 * 24));
     return diff >= 0 ? `D+${diff + 1}` : `D${diff}`;
   }, [startDate, todayKey]);
 
-  // Calendar Grid
   const calendarDays = useMemo(() => {
     const year = viewDate.getFullYear();
     const month = viewDate.getMonth();
@@ -467,14 +430,12 @@ export default function App() {
 
   return (
     <div className="mx-auto flex min-h-screen max-w-md flex-col border-x border-zinc-900 bg-zinc-950 text-zinc-100 shadow-2xl">
-      {/* Toast */}
       {toastMsg && (
         <div className="fixed left-1/2 top-4 z-50 -translate-x-1/2 rounded-full border border-zinc-700 bg-zinc-900/95 px-4 py-2 text-xs font-medium text-zinc-100 shadow-xl backdrop-blur">
           {toastMsg}
         </div>
       )}
 
-      {/* Top Header */}
       <header className="sticky top-0 z-20 border-b border-zinc-800/80 bg-zinc-950/95 px-4 py-2.5 backdrop-blur">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
@@ -503,7 +464,6 @@ export default function App() {
           </div>
 
           <div className="flex items-center gap-1.5">
-            {/* 접속 사용자 전환 스위치 */}
             <button
               onClick={() => setCurrentUser((u) => (u === 'boyfriend' ? 'girlfriend' : 'boyfriend'))}
               className={`rounded-full px-2.5 py-1 text-[11px] font-semibold transition ${
@@ -536,11 +496,9 @@ export default function App() {
         </div>
       </header>
 
-      {/* Main Content */}
       <main className="flex-1 overflow-y-auto pb-20">
         {activeTab === 'calendar' && (
           <div className="space-y-2.5 p-3">
-            {/* Month Nav & 주체별 색상 범례/필터 */}
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-1">
                 <button
@@ -560,7 +518,6 @@ export default function App() {
                 </button>
               </div>
 
-              {/* 색상 범례 겸 필터 */}
               <div className="flex items-center gap-1 text-[10px]">
                 <button
                   onClick={() => setFilterCategory('all')}
@@ -593,7 +550,6 @@ export default function App() {
               </div>
             </div>
 
-            {/* Weekday Header */}
             <div className="grid grid-cols-7 text-center text-[11px] font-semibold text-zinc-500">
               {['일', '월', '화', '수', '목', '금', '토'].map((w, idx) => (
                 <div key={w} className={idx === 0 ? 'text-rose-400' : idx === 6 ? 'text-sky-400' : ''}>
@@ -602,7 +558,6 @@ export default function App() {
               ))}
             </div>
 
-            {/* Days Grid */}
             <div className="grid grid-cols-7 gap-1">
               {calendarDays.map((dateObj, idx) => {
                 if (!dateObj) return <div key={`empty-${idx}`} className="min-h-[58px]" />;
@@ -648,7 +603,6 @@ export default function App() {
                       )}
                     </div>
 
-                    {/* 달력 셀 내부: 주체 색상 구분 + 기입된 내용 텍스트 */}
                     <div className="mt-0.5 flex w-full flex-col gap-0.5 overflow-hidden">
                       {dayEvents.slice(0, maxVisible).map((ev) => {
                         const meta = SUBJECT_META[ev.category] || SUBJECT_META.together;
@@ -673,7 +627,6 @@ export default function App() {
               })}
             </div>
 
-            {/* 선택한 날짜의 등록된 일정 상세 패널 */}
             <div className="rounded-2xl border border-zinc-800 bg-zinc-900/95 p-3 shadow-lg">
               <div className="mb-2 flex items-center justify-between">
                 <div className="flex items-center gap-2">
@@ -751,10 +704,7 @@ export default function App() {
         {activeTab === 'wishlist' && (
           <div className="space-y-4 p-4">
             <h2 className="text-base font-bold text-zinc-100">데이트 위시리스트</h2>
-            <form
-              onSubmit={handleAddWish}
-              className="space-y-2 rounded-2xl border border-zinc-800 bg-zinc-900 p-3"
-            >
+            <form onSubmit={handleAddWish} className="space-y-2 rounded-2xl border border-zinc-800 bg-zinc-900 p-3">
               <input
                 type="text"
                 value={newWishTitle}
@@ -778,10 +728,7 @@ export default function App() {
 
             <div className="space-y-2">
               {wishes.map((w) => (
-                <div
-                  key={w.id}
-                  className="flex items-center justify-between rounded-2xl border border-zinc-800 bg-zinc-900/90 p-3"
-                >
+                <div key={w.id} className="flex items-center justify-between rounded-2xl border border-zinc-800 bg-zinc-900/90 p-3">
                   <div>
                     <p className="text-xs font-bold text-zinc-100">{w.title}</p>
                     <p className="text-[11px] text-zinc-400">
@@ -816,10 +763,7 @@ export default function App() {
               </div>
             </div>
 
-            <form
-              onSubmit={handleAddMemory}
-              className="space-y-2 rounded-2xl border border-zinc-800 bg-zinc-900 p-3"
-            >
+            <form onSubmit={handleAddMemory} className="space-y-2 rounded-2xl border border-zinc-800 bg-zinc-900 p-3">
               <input
                 type="text"
                 value={newMemTitle}
@@ -899,7 +843,6 @@ export default function App() {
         )}
       </main>
 
-      {/* Bottom Tab Navigation */}
       <nav className="fixed bottom-0 left-1/2 z-20 flex w-full max-w-md -translate-x-1/2 border-t border-zinc-800/90 bg-zinc-950/95 px-2 py-2 backdrop-blur">
         {[
           { id: 'calendar', icon: CalendarIcon, label: '캘린더' },
@@ -924,7 +867,6 @@ export default function App() {
         })}
       </nav>
 
-      {/* Add Event Modal */}
       {showAddModal && (
         <div className="fixed inset-0 z-40 flex items-end justify-center bg-black/70 p-4 backdrop-blur-sm sm:items-center">
           <form
@@ -938,7 +880,6 @@ export default function App() {
               </button>
             </div>
 
-            {/* 주체자 선택 버튼: 또또 / 뚜뚜 / 함께 */}
             <div className="space-y-1.5">
               <label className="text-[11px] font-semibold text-zinc-400">주체자</label>
               <div className="grid grid-cols-3 gap-1.5">
@@ -995,7 +936,6 @@ export default function App() {
         </div>
       )}
 
-      {/* Notification Preview Modal */}
       {showNotifModal && (
         <div className="fixed inset-0 z-40 flex items-center justify-center bg-black/70 p-4 backdrop-blur-sm">
           <div className="w-full max-w-md space-y-3 rounded-3xl border border-zinc-800 bg-zinc-900 p-5 shadow-2xl">
