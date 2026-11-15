@@ -8,15 +8,13 @@ import {
   ChevronRight,
   MapPin,
   Clock,
-  Sparkles,
   Trash2,
   Download,
   Smartphone,
   Share,
   Gift,
   Camera,
-  X,
-  UserCheck
+  X
 } from 'lucide-react';
 
 // 대한민국 법정공휴일 및 대체공휴일 (2025 ~ 2027)
@@ -81,34 +79,28 @@ const KOREAN_HOLIDAYS = {
   '2027-12-25': '성탄절'
 };
 
-// 주체자 구분: 또또 (나) / 뚜뚜 (여자친구) / 함께
+// 주체자 구분: 또또 / 뚜뚜 / 함께
 const SUBJECT_META = {
   boyfriend: {
-    label: '또또 (나)',
-    shortLabel: '또또',
+    label: '또또',
     badge: 'bg-sky-500 text-zinc-950 font-bold',
-    pillInactive: 'bg-zinc-800/90 text-sky-300 border border-sky-500/30',
-    calendarBar: 'bg-sky-500/25 text-sky-200 border-l-2 border-sky-400',
+    calendarBar: 'bg-sky-500/30 text-sky-200',
     dot: 'bg-sky-400',
-    card: 'border-sky-500/30 bg-sky-950/35'
+    card: 'border-sky-500/35 bg-sky-950/40'
   },
   girlfriend: {
-    label: '뚜뚜 (여자친구)',
-    shortLabel: '뚜뚜',
+    label: '뚜뚜',
     badge: 'bg-amber-400 text-zinc-950 font-bold',
-    pillInactive: 'bg-zinc-800/90 text-amber-300 border border-amber-500/30',
-    calendarBar: 'bg-amber-400/25 text-amber-200 border-l-2 border-amber-400',
+    calendarBar: 'bg-amber-400/30 text-amber-200',
     dot: 'bg-amber-400',
-    card: 'border-amber-500/30 bg-amber-950/35'
+    card: 'border-amber-500/35 bg-amber-950/40'
   },
   together: {
     label: '함께',
-    shortLabel: '함께',
     badge: 'bg-rose-500 text-white font-bold',
-    pillInactive: 'bg-zinc-800/90 text-rose-300 border border-rose-500/30',
-    calendarBar: 'bg-rose-500/25 text-rose-200 border-l-2 border-rose-400',
+    calendarBar: 'bg-rose-500/30 text-rose-200',
     dot: 'bg-rose-400',
-    card: 'border-rose-500/30 bg-rose-950/35'
+    card: 'border-rose-500/35 bg-rose-950/40'
   }
 };
 
@@ -144,28 +136,6 @@ export default function App() {
         author: 'boyfriend',
         notifySameDay: true,
         isNew: false
-      },
-      {
-        id: '2',
-        date: todayKey,
-        time: '14:00',
-        title: '또또 운동 및 개인 일정',
-        category: 'boyfriend',
-        location: '',
-        author: 'boyfriend',
-        notifySameDay: true,
-        isNew: false
-      },
-      {
-        id: '3',
-        date: todayKey,
-        time: '15:30',
-        title: '뚜뚜 필라테스 수업',
-        category: 'girlfriend',
-        location: '',
-        author: 'girlfriend',
-        notifySameDay: true,
-        isNew: false
       }
     ];
   });
@@ -190,8 +160,6 @@ export default function App() {
   // Modals & Inputs
   const [showAddModal, setShowAddModal] = useState(false);
   const [showNotifModal, setShowNotifModal] = useState(false);
-  const [quickInput, setQuickInput] = useState('');
-  const [quickSubject, setQuickSubject] = useState('together');
   const [newTitle, setNewTitle] = useState('');
   const [newTime, setNewTime] = useState('18:30');
   const [newCategory, setNewCategory] = useState('together');
@@ -256,39 +224,6 @@ export default function App() {
     return cells;
   }, [viewDate]);
 
-  const handleQuickAdd = (e) => {
-    e.preventDefault();
-    if (!quickInput.trim()) return;
-    let targetDate = selectedDate;
-    if (quickInput.includes('내일')) {
-      const tmr = new Date(today);
-      tmr.setDate(tmr.getDate() + 1);
-      targetDate = formatDateKey(tmr);
-    }
-    const timeMatch = quickInput.match(/(\d{1,2})시/);
-    const parsedTime = timeMatch
-      ? `${String(
-          Number(timeMatch[1]) < 12 && quickInput.includes('저녁') ? Number(timeMatch[1]) + 12 : timeMatch[1]
-        ).padStart(2, '0')}:00`
-      : '19:00';
-
-    const created = {
-      id: Date.now().toString(),
-      date: targetDate,
-      time: parsedTime,
-      title: quickInput.trim(),
-      category: quickSubject,
-      location: '',
-      author: currentUser,
-      notifySameDay: true,
-      isNew: true
-    };
-    setEvents((prev) => [...prev, created]);
-    setSelectedDate(targetDate);
-    setQuickInput('');
-    showToast(`[${SUBJECT_META[quickSubject].label}] 일정이 등록되었습니다!`);
-  };
-
   const handleCreateEvent = (e) => {
     e.preventDefault();
     if (!newTitle.trim()) return;
@@ -307,7 +242,7 @@ export default function App() {
     setNewTitle('');
     setNewLocation('');
     setShowAddModal(false);
-    showToast(`[${SUBJECT_META[newCategory].label}] 새 일정이 등록되었습니다.`);
+    showToast(`[${SUBJECT_META[newCategory].label}] 일정이 등록되었습니다.`);
   };
 
   const handleConvertWish = (wish) => {
@@ -333,7 +268,7 @@ export default function App() {
     const bodyText =
       todayEvents.length > 0
         ? `오늘 일정: ${todayEvents
-            .map((e) => `[${SUBJECT_META[e.category]?.shortLabel || '함께'}] ${e.time} ${e.title}`)
+            .map((e) => `[${SUBJECT_META[e.category]?.label || '함께'}] ${e.time} ${e.title}`)
             .join(', ')}`
         : '오늘 등록된 공유 일정이 있습니다. 앱에서 확인해보세요!';
 
@@ -384,9 +319,9 @@ export default function App() {
       )}
 
       {/* Top Header */}
-      <header className="sticky top-0 z-20 border-b border-zinc-800/80 bg-zinc-950/90 px-4 py-3 backdrop-blur">
+      <header className="sticky top-0 z-20 border-b border-zinc-800/80 bg-zinc-950/95 px-4 py-2.5 backdrop-blur">
         <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2.5">
+          <div className="flex items-center gap-2">
             <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-gradient-to-br from-rose-500 to-pink-600 text-white shadow-md shadow-rose-500/20">
               <Heart className="h-4 w-4 fill-current" />
             </div>
@@ -402,7 +337,7 @@ export default function App() {
           </div>
 
           <div className="flex items-center gap-1.5">
-            {/* 작성자 전환 스위치 */}
+            {/* 접속 사용자 전환 스위치 */}
             <button
               onClick={() => setCurrentUser((u) => (u === 'boyfriend' ? 'girlfriend' : 'boyfriend'))}
               className={`rounded-full px-2.5 py-1 text-[11px] font-semibold transition ${
@@ -412,7 +347,7 @@ export default function App() {
               }`}
               title="현재 접속 사용자 전환"
             >
-              {currentUser === 'boyfriend' ? '또또 (나)' : '뚜뚜 (여자친구)'}
+              {currentUser === 'boyfriend' ? '또또' : '뚜뚜'}
             </button>
 
             <button
@@ -436,57 +371,15 @@ export default function App() {
       </header>
 
       {/* Main Content */}
-      <main className="flex-1 overflow-y-auto pb-24">
+      <main className="flex-1 overflow-y-auto pb-20">
         {activeTab === 'calendar' && (
-          <div className="space-y-3 p-3.5">
-            {/* Quick Add with 주체자 선택 */}
-            <form
-              onSubmit={handleQuickAdd}
-              className="space-y-2 rounded-2xl border border-zinc-800 bg-zinc-900/90 p-2.5 shadow-sm"
-            >
-              <div className="flex items-center gap-2">
-                <Sparkles className="ml-0.5 h-4 w-4 shrink-0 text-rose-400" />
-                <input
-                  type="text"
-                  value={quickInput}
-                  onChange={(e) => setQuickInput(e.target.value)}
-                  placeholder="빠른 등록: 예) 내일 저녁 7시 강남 파스타"
-                  className="w-full bg-transparent text-xs text-zinc-100 placeholder-zinc-500 focus:outline-none"
-                />
-                <button
-                  type="submit"
-                  className="shrink-0 rounded-xl bg-rose-500 px-3 py-1.5 text-xs font-semibold text-white transition hover:bg-rose-600"
-                >
-                  등록
-                </button>
-              </div>
-              <div className="flex items-center justify-between border-t border-zinc-800/80 pt-2">
-                <span className="flex items-center gap-1 text-[11px] text-zinc-400">
-                  <UserCheck className="h-3 w-3 text-zinc-500" /> 주체자:
-                </span>
-                <div className="flex gap-1.5">
-                  {(['boyfriend', 'girlfriend', 'together']).map((key) => (
-                    <button
-                      type="button"
-                      key={key}
-                      onClick={() => setQuickSubject(key)}
-                      className={`rounded-lg px-2 py-0.5 text-[11px] transition ${
-                        quickSubject === key ? SUBJECT_META[key].badge : SUBJECT_META[key].pillInactive
-                      }`}
-                    >
-                      {SUBJECT_META[key].label}
-                    </button>
-                  ))}
-                </div>
-              </div>
-            </form>
-
+          <div className="space-y-2.5 p-3">
             {/* Month Nav & 주체별 색상 범례/필터 */}
-            <div className="flex items-center justify-between pt-0.5">
-              <div className="flex items-center gap-1.5">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-1">
                 <button
                   onClick={() => setViewDate(new Date(viewDate.getFullYear(), viewDate.getMonth() - 1, 1))}
-                  className="rounded-lg p-1.5 text-zinc-400 hover:bg-zinc-800 hover:text-zinc-100"
+                  className="rounded-lg p-1 text-zinc-400 hover:bg-zinc-800 hover:text-zinc-100"
                 >
                   <ChevronLeft className="h-4 w-4" />
                 </button>
@@ -495,7 +388,7 @@ export default function App() {
                 </span>
                 <button
                   onClick={() => setViewDate(new Date(viewDate.getFullYear(), viewDate.getMonth() + 1, 1))}
-                  className="rounded-lg p-1.5 text-zinc-400 hover:bg-zinc-800 hover:text-zinc-100"
+                  className="rounded-lg p-1 text-zinc-400 hover:bg-zinc-800 hover:text-zinc-100"
                 >
                   <ChevronRight className="h-4 w-4" />
                 </button>
@@ -505,7 +398,7 @@ export default function App() {
               <div className="flex items-center gap-1 text-[10px]">
                 <button
                   onClick={() => setFilterCategory('all')}
-                  className={`rounded-full px-2 py-1 font-semibold transition ${
+                  className={`rounded-full px-2 py-0.5 font-semibold transition ${
                     filterCategory === 'all'
                       ? 'bg-zinc-100 text-zinc-950'
                       : 'bg-zinc-900 text-zinc-400 ring-1 ring-zinc-800'
@@ -517,7 +410,7 @@ export default function App() {
                   <button
                     key={key}
                     onClick={() => setFilterCategory((prev) => (prev === key ? 'all' : key))}
-                    className={`flex items-center gap-1 rounded-full px-2 py-1 font-semibold transition ${
+                    className={`flex items-center gap-1 rounded-full px-2 py-0.5 font-semibold transition ${
                       filterCategory === key
                         ? SUBJECT_META[key].badge
                         : 'bg-zinc-900 text-zinc-300 ring-1 ring-zinc-800'
@@ -528,7 +421,7 @@ export default function App() {
                         filterCategory === key ? 'bg-current' : SUBJECT_META[key].dot
                       }`}
                     />
-                    {SUBJECT_META[key].shortLabel}
+                    {SUBJECT_META[key].label}
                   </button>
                 ))}
               </div>
@@ -543,10 +436,10 @@ export default function App() {
               ))}
             </div>
 
-            {/* Days Grid: 주체별 컬러 바 + 일정 텍스트 표시 (길면 truncate) */}
+            {/* Days Grid: 한 화면에 달력과 하단 등록 일정 상세가 함께 보이도록 컴팩트 높이 적용 */}
             <div className="grid grid-cols-7 gap-1">
               {calendarDays.map((dateObj, idx) => {
-                if (!dateObj) return <div key={`empty-${idx}`} className="min-h-[82px]" />;
+                if (!dateObj) return <div key={`empty-${idx}`} className="min-h-[58px]" />;
                 const dKey = formatDateKey(dateObj);
                 const holiday = KOREAN_HOLIDAYS[dKey];
                 const dayOfWeek = dateObj.getDay();
@@ -557,20 +450,20 @@ export default function App() {
                 const dayEvents = events.filter(
                   (ev) => ev.date === dKey && (filterCategory === 'all' || ev.category === filterCategory)
                 );
-                const maxVisible = holiday ? 2 : 3;
+                const maxVisible = holiday ? 1 : 2;
                 const hiddenCount = dayEvents.length - maxVisible;
 
                 return (
                   <button
                     key={dKey}
                     onClick={() => setSelectedDate(dKey)}
-                    className={`flex min-h-[82px] flex-col items-stretch justify-start overflow-hidden rounded-xl border p-1 text-left transition ${
+                    className={`flex min-h-[58px] flex-col items-stretch justify-start overflow-hidden rounded-xl border p-0.5 text-left transition ${
                       isSelected
                         ? 'border-rose-500 bg-zinc-900 ring-1 ring-rose-500'
                         : 'border-zinc-800/70 bg-zinc-900/50 hover:bg-zinc-900'
                     }`}
                   >
-                    <div className="flex items-center justify-between gap-0.5">
+                    <div className="flex items-center justify-between gap-0.5 px-0.5">
                       <span
                         className={`flex h-4 w-4 shrink-0 items-center justify-center rounded-full text-[11px] font-bold ${
                           isToday
@@ -590,21 +483,21 @@ export default function App() {
                     </div>
 
                     {/* 달력 셀 내부: 주체 색상 구분 + 기입된 내용 텍스트 (길면 말줄임표로 잘림) */}
-                    <div className="mt-1 flex w-full flex-col gap-0.5 overflow-hidden">
+                    <div className="mt-0.5 flex w-full flex-col gap-0.5 overflow-hidden">
                       {dayEvents.slice(0, maxVisible).map((ev) => {
                         const meta = SUBJECT_META[ev.category] || SUBJECT_META.together;
                         return (
                           <div
                             key={ev.id}
                             title={`${meta.label}: ${ev.title}`}
-                            className={`w-full truncate rounded-[4px] px-1 py-[1px] text-[9.5px] font-medium leading-tight ${meta.calendarBar}`}
+                            className={`w-full truncate rounded-[3px] px-1 py-[1px] text-[9px] font-medium leading-tight ${meta.calendarBar}`}
                           >
                             {ev.title}
                           </div>
                         );
                       })}
                       {hiddenCount > 0 && (
-                        <span className="pr-0.5 text-right text-[8.5px] font-medium text-zinc-400">
+                        <span className="pr-0.5 text-right text-[8px] font-medium leading-none text-zinc-400">
                           +{hiddenCount}
                         </span>
                       )}
@@ -614,9 +507,9 @@ export default function App() {
               })}
             </div>
 
-            {/* Selected Date Detail */}
-            <div className="mt-2 rounded-2xl border border-zinc-800 bg-zinc-900/90 p-3.5">
-              <div className="mb-2.5 flex items-center justify-between">
+            {/* 선택한 날짜의 등록된 일정 상세 패널 (스크롤 없이 바로 보이도록 배치) */}
+            <div className="rounded-2xl border border-zinc-800 bg-zinc-900/95 p-3 shadow-lg">
+              <div className="mb-2 flex items-center justify-between">
                 <div className="flex items-center gap-2">
                   <span className="text-sm font-bold text-zinc-100">{selectedDate}</span>
                   {selectedHoliday && (
@@ -624,30 +517,33 @@ export default function App() {
                       {selectedHoliday}
                     </span>
                   )}
+                  <span className="text-[11px] text-zinc-400">
+                    ({selectedDayEvents.length}건)
+                  </span>
                 </div>
                 <button
                   onClick={() => {
                     setNewCategory('together');
                     setShowAddModal(true);
                   }}
-                  className="flex items-center gap-1 rounded-xl bg-rose-500 px-2.5 py-1.5 text-xs font-semibold text-white shadow-sm transition hover:bg-rose-600"
+                  className="flex items-center gap-1 rounded-xl bg-rose-500 px-2.5 py-1 text-xs font-semibold text-white shadow-sm transition hover:bg-rose-600"
                 >
                   <Plus className="h-3.5 w-3.5" /> 일정 추가
                 </button>
               </div>
 
               {selectedDayEvents.length === 0 ? (
-                <p className="py-4 text-center text-xs text-zinc-500">
-                  등록된 일정이 없습니다. 위에서 일정을 추가해보세요!
+                <p className="py-3 text-center text-xs text-zinc-500">
+                  등록된 일정이 없습니다. 우측 상단 [+ 일정 추가]를 눌러 등록해보세요!
                 </p>
               ) : (
-                <div className="space-y-2">
+                <div className="space-y-1.5">
                   {selectedDayEvents.map((ev) => {
                     const meta = SUBJECT_META[ev.category] || SUBJECT_META.together;
                     return (
                       <div
                         key={ev.id}
-                        className={`flex items-start justify-between rounded-xl border p-3 ${meta.card}`}
+                        className={`flex items-start justify-between rounded-xl border p-2.5 ${meta.card}`}
                       >
                         <div className="min-w-0 flex-1 space-y-1 pr-2">
                           <div className="flex items-center gap-1.5">
@@ -902,9 +798,9 @@ export default function App() {
               </button>
             </div>
 
-            {/* 주체자 선택 버튼 */}
+            {/* 주체자 선택 버튼: 또또 / 뚜뚜 / 함께 */}
             <div className="space-y-1.5">
-              <label className="text-[11px] font-semibold text-zinc-400">주체자 선택</label>
+              <label className="text-[11px] font-semibold text-zinc-400">주체자</label>
               <div className="grid grid-cols-3 gap-1.5">
                 {(['boyfriend', 'girlfriend', 'together']).map((key) => {
                   const meta = SUBJECT_META[key];
