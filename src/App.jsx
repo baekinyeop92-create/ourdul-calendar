@@ -1,4 +1,13 @@
 import React, { useState, useEffect, useMemo } from 'react';
+import { initializeApp } from 'firebase/app';
+import {
+  getFirestore,
+  collection,
+  doc,
+  setDoc,
+  deleteDoc,
+  onSnapshot
+} from 'firebase/firestore';
 import {
   Calendar as CalendarIcon,
   Heart,
@@ -14,8 +23,39 @@ import {
   Share,
   Gift,
   Camera,
-  X
+  X,
+  Cloud,
+  CloudOff
 } from 'lucide-react';
+
+const FIREBASE_CONFIG = {
+  apiKey: "AIzaSyBcEUiXLgPpNzpGAipDEisbjH2KTUmGeoE",
+  authDomain: "ourdul-calendar.firebaseapp.com",
+  projectId: "ourdul-calendar",
+  storageBucket: "ourdul-calendar.firebasestorage.app",
+  messagingSenderId: "1077364780678",
+  appId: "1:1077364780678:web:52e8a0eea680940268eb07"
+};
+
+const isFirebaseConfigured = Boolean(
+  FIREBASE_CONFIG.apiKey &&
+  !FIREBASE_CONFIG.apiKey.startsWith('여기에_') &&
+  FIREBASE_CONFIG.projectId &&
+  !FIREBASE_CONFIG.projectId.startsWith('여기에_')
+);
+
+let db = null;
+if (isFirebaseConfigured) {
+  try {
+    const firebaseApp = initializeApp(FIREBASE_CONFIG);
+    db = getFirestore(firebaseApp);
+  } catch (err) {
+    console.error('Firebase 초기화 오류:', err);
+  }
+}
+
+// 두 사람의 공유 데이터 경로 (또또 & 뚜뚜 전용 공간)
+const COUPLE_ROOM_ID = 'ttotto-ttuttu-shared';
 
 // 대한민국 법정공휴일 및 대체공휴일 (2025 ~ 2027)
 const KOREAN_HOLIDAYS = {
@@ -116,45 +156,35 @@ export default function App() {
   const todayKey = formatDateKey(today);
 
   const [activeTab, setActiveTab] = useState('calendar'); // calendar | wishlist | memories | install
-  const [currentUser, setCurrentUser] = useState('boyfriend'); // boyfriend (또또) | girlfriend (뚜뚜)
+  const [currentUser, setCurrentUser] = useState(() => localStorage.getItem('couple_current_user') || 'boyfriend');
   const [viewDate, setViewDate] = useState(new Date(today.getFullYear(), today.getMonth(), 1));
   const [selectedDate, setSelectedDate] = useState(todayKey);
   const [filterCategory, setFilterCategory] = useState('all');
+  const [syncConnected, setSyncConnected] = useState(false);
 
-  // Persistent States
+  // States (Firebase 연결 시 실시간 구독, 미연결 시 localStorage 폴백)
   const [events, setEvents] = useState(() => {
+    if (db) return [];
     const saved = localStorage.getItem('couple_events_v1');
-    if (saved) return JSON.parse(saved);
-    return [
-      {
-        id: '1',
-        date: todayKey,
-        time: '19:00',
-        title: '성수동 저녁 맛집 데이트',
-        category: 'together',
-        location: '성수동',
-        author: 'boyfriend',
-        notifySameDay: true,
-        isNew: false
-      }
-    ];
+    return saved ? JSON.parse(saved) : [];
   });
 
   const [wishes, setWishes] = useState(() => {
+    if (db) return [];
     const saved = localStorage.getItem('couple_wishes_v1');
-    if (saved) return JSON.parse(saved);
-    return [
-      { id: 'w1', title: '한강 피크닉 & 치맥', location: '여의도 한강공원', tag: '데이트', author: 'girlfriend' },
-      { id: 'w2', title: '주말 근교 드라이브 카페', location: '남양주 북한강', tag: '드라이브', author: 'boyfriend' }
-    ];
+    return saved
+      ? JSON.parse(saved)
+      : [
+          { id: 'w1', title: '한강 피크닉 & 치맥', location: '여의도 한강공원', tag: '데이트', author: 'girlfriend' },
+          { id: 'w2', title: '주말 근교 드라이브 카페', location: '남양주 북한강', tag: '드라이브', author: 'boyfriend' }
+        ];
   });
 
   const [startDate, setStartDate] = useState(() => localStorage.getItem('couple_start_date') || '2025-05-01');
   const [memories, setMemories] = useState(() => {
+    if (db) return [];
     const saved = localStorage.getItem('couple_memories_v1');
-    return saved
-      ? JSON.parse(saved)
-      : [{ id: 'm1', date: '2026-10-15', title: '가을 여행 추억', note: '날씨도 완벽하고 음식도 최고였던 날!' }];
+    return saved ? JSON.parse(saved) : [];
   });
 
   // Modals & Inputs
@@ -173,20 +203,78 @@ export default function App() {
   const [deferredPrompt, setDeferredPrompt] = useState(null);
   const [toastMsg, setToastMsg] = useState('');
 
+  const showToast = (msg) => {
+    setToastMsg(msg);
+    setTimeout(() => setToastMsg(''), 3000);
+  };
+
+  // 현재 기기 사용자(또또/뚜뚜) 저장
   useEffect(() => {
-    localStorage.setItem('couple_events_v1', JSON.stringify(events));
+    localStorage.setItem('couple_current_user', currentUser);
+  }, [currentUser]);
+
+  // Firebase Firestore 실시간 양방향 구독 (또또 AOS <-> 뚜뚜 iOS)
+  useEffect(() => {
+    if (!db) return;
+
+    const eventsRef = collection(db, 'couples', COUPLE_ROOM_ID, 'events');
+    const unsubEvents = onSnapshot(
+      eventsRef,
+      (snapshot) => {
+        const list = snapshot.docs.map((d) => ({ id: d.id, ...d.data() }));
+        list.sort((a, b) => (a.time || '').localeCompare(b.time || ''));
+        setEvents(list);
+        setSyncConnected(true);
+      },
+      (error) => {
+        console.error('일정 동기화 오류:', error);
+        setSyncConnected(false);
+      }
+    );
+
+    const wishesRef = collection(db, 'couples', COUPLE_ROOM_ID, 'wishes');
+    const unsubWishes = onSnapshot(wishesRef, (snapshot) => {
+      const list = snapshot.docs.map((d) => ({ id: d.id, ...d.data() }));
+      setWishes(list);
+    });
+
+    const memoriesRef = collection(db, 'couples', COUPLE_ROOM_ID, 'memories');
+    const unsubMemories = onSnapshot(memoriesRef, (snapshot) => {
+      const list = snapshot.docs.map((d) => ({ id: d.id, ...d.data() }));
+      list.sort((a, b) => (b.date || '').localeCompare(a.date || ''));
+      setMemories(list);
+    });
+
+    const settingsRef = doc(db, 'couples', COUPLE_ROOM_ID, 'settings', 'main');
+    const unsubSettings = onSnapshot(settingsRef, (docSnap) => {
+      if (docSnap.exists() && docSnap.data().startDate) {
+        setStartDate(docSnap.data().startDate);
+      }
+    });
+
+    return () => {
+      unsubEvents();
+      unsubWishes();
+      unsubMemories();
+      unsubSettings();
+    };
+  }, []);
+
+  // 로컬 폴백 저장 (Firebase 미연결 시에만 동작)
+  useEffect(() => {
+    if (!db) localStorage.setItem('couple_events_v1', JSON.stringify(events));
   }, [events]);
 
   useEffect(() => {
-    localStorage.setItem('couple_wishes_v1', JSON.stringify(wishes));
+    if (!db) localStorage.setItem('couple_wishes_v1', JSON.stringify(wishes));
   }, [wishes]);
 
   useEffect(() => {
-    localStorage.setItem('couple_start_date', startDate);
+    if (!db) localStorage.setItem('couple_start_date', startDate);
   }, [startDate]);
 
   useEffect(() => {
-    localStorage.setItem('couple_memories_v1', JSON.stringify(memories));
+    if (!db) localStorage.setItem('couple_memories_v1', JSON.stringify(memories));
   }, [memories]);
 
   useEffect(() => {
@@ -197,11 +285,6 @@ export default function App() {
     window.addEventListener('beforeinstallprompt', handler);
     return () => window.removeEventListener('beforeinstallprompt', handler);
   }, []);
-
-  const showToast = (msg) => {
-    setToastMsg(msg);
-    setTimeout(() => setToastMsg(''), 3000);
-  };
 
   // D-Day Calculation
   const dDayCount = useMemo(() => {
@@ -224,11 +307,12 @@ export default function App() {
     return cells;
   }, [viewDate]);
 
-  const handleCreateEvent = (e) => {
+  const handleCreateEvent = async (e) => {
     e.preventDefault();
     if (!newTitle.trim()) return;
+    const id = Date.now().toString();
     const created = {
-      id: Date.now().toString(),
+      id,
       date: selectedDate,
       time: newTime,
       title: newTitle.trim(),
@@ -236,18 +320,62 @@ export default function App() {
       location: newLocation.trim(),
       author: currentUser,
       notifySameDay: true,
-      isNew: true
+      createdAt: new Date().toISOString()
     };
-    setEvents((prev) => [...prev, created]);
+
+    if (db) {
+      try {
+        await setDoc(doc(db, 'couples', COUPLE_ROOM_ID, 'events', id), created);
+        showToast(`[${SUBJECT_META[newCategory].label}] 일정이 실시간 공유되었습니다!`);
+      } catch (err) {
+        console.error(err);
+        showToast('저장 실패: Firestore 보안 규칙을 확인해주세요.');
+        return;
+      }
+    } else {
+      setEvents((prev) => [...prev, created]);
+      showToast(`[${SUBJECT_META[newCategory].label}] 일정이 기기에 등록되었습니다.`);
+    }
+
     setNewTitle('');
     setNewLocation('');
     setShowAddModal(false);
-    showToast(`[${SUBJECT_META[newCategory].label}] 일정이 등록되었습니다.`);
   };
 
-  const handleConvertWish = (wish) => {
+  const handleDeleteEvent = async (id) => {
+    if (db) {
+      await deleteDoc(doc(db, 'couples', COUPLE_ROOM_ID, 'events', id));
+      showToast('일정이 삭제되었습니다.');
+    } else {
+      setEvents((prev) => prev.filter((item) => item.id !== id));
+    }
+  };
+
+  const handleAddWish = async (e) => {
+    e.preventDefault();
+    if (!newWishTitle.trim()) return;
+    const id = Date.now().toString();
+    const item = {
+      id,
+      title: newWishTitle.trim(),
+      location: newWishLoc.trim() || '서울',
+      tag: '데이트',
+      author: currentUser
+    };
+    if (db) {
+      await setDoc(doc(db, 'couples', COUPLE_ROOM_ID, 'wishes', id), item);
+    } else {
+      setWishes((prev) => [...prev, item]);
+    }
+    setNewWishTitle('');
+    setNewWishLoc('');
+    showToast('위시리스트에 추가되었습니다.');
+  };
+
+  const handleConvertWish = async (wish) => {
+    const id = Date.now().toString();
     const created = {
-      id: Date.now().toString(),
+      id,
       date: selectedDate,
       time: '14:00',
       title: wish.title,
@@ -255,12 +383,40 @@ export default function App() {
       location: wish.location,
       author: currentUser,
       notifySameDay: true,
-      isNew: true
+      createdAt: new Date().toISOString()
     };
-    setEvents((prev) => [...prev, created]);
-    setWishes((prev) => prev.filter((w) => w.id !== wish.id));
+    if (db) {
+      await setDoc(doc(db, 'couples', COUPLE_ROOM_ID, 'events', id), created);
+      await deleteDoc(doc(db, 'couples', COUPLE_ROOM_ID, 'wishes', wish.id));
+    } else {
+      setEvents((prev) => [...prev, created]);
+      setWishes((prev) => prev.filter((w) => w.id !== wish.id));
+    }
     setActiveTab('calendar');
-    showToast(`'${wish.title}' 일정이 ${selectedDate} [함께] 일정으로 추가되었습니다!`);
+    showToast(`'${wish.title}' 일정이 ${selectedDate} [함께] 일정으로 공유되었습니다!`);
+  };
+
+  const handleUpdateStartDate = async (val) => {
+    setStartDate(val);
+    if (db) {
+      await setDoc(doc(db, 'couples', COUPLE_ROOM_ID, 'settings', 'main'), { startDate: val }, { merge: true });
+      showToast('사귄 날이 양쪽 기기에 동기화되었습니다.');
+    }
+  };
+
+  const handleAddMemory = async (e) => {
+    e.preventDefault();
+    if (!newMemTitle.trim()) return;
+    const id = Date.now().toString();
+    const item = { id, date: selectedDate, title: newMemTitle.trim(), note: newMemNote.trim() };
+    if (db) {
+      await setDoc(doc(db, 'couples', COUPLE_ROOM_ID, 'memories', id), item);
+    } else {
+      setMemories((prev) => [item, ...prev]);
+    }
+    setNewMemTitle('');
+    setNewMemNote('');
+    showToast('추억 로그가 기록되었습니다.');
   };
 
   const triggerTestPush = async () => {
@@ -332,7 +488,17 @@ export default function App() {
                   {dDayCount}
                 </span>
               </div>
-              <p className="text-[11px] text-zinc-400">또또 · 뚜뚜 공유 캘린더</p>
+              <div className="flex items-center gap-1 text-[10.5px]">
+                {syncConnected ? (
+                  <span className="flex items-center gap-1 text-emerald-400">
+                    <Cloud className="h-3 w-3" /> 또또 · 뚜뚜 실시간 동기화 중
+                  </span>
+                ) : (
+                  <span className="flex items-center gap-1 text-amber-400">
+                    <CloudOff className="h-3 w-3" /> {isFirebaseConfigured ? '서버 연결 확인 중...' : '로컬 모드'}
+                  </span>
+                )}
+              </div>
             </div>
           </div>
 
@@ -345,7 +511,7 @@ export default function App() {
                   ? 'bg-sky-500/15 text-sky-300 ring-1 ring-sky-500/40'
                   : 'bg-amber-400/15 text-amber-300 ring-1 ring-amber-400/40'
               }`}
-              title="현재 접속 사용자 전환"
+              title="내 기기 사용자 설정"
             >
               {currentUser === 'boyfriend' ? '또또' : '뚜뚜'}
             </button>
@@ -436,7 +602,7 @@ export default function App() {
               ))}
             </div>
 
-            {/* Days Grid: 한 화면에 달력과 하단 등록 일정 상세가 함께 보이도록 컴팩트 높이 적용 */}
+            {/* Days Grid */}
             <div className="grid grid-cols-7 gap-1">
               {calendarDays.map((dateObj, idx) => {
                 if (!dateObj) return <div key={`empty-${idx}`} className="min-h-[58px]" />;
@@ -482,7 +648,7 @@ export default function App() {
                       )}
                     </div>
 
-                    {/* 달력 셀 내부: 주체 색상 구분 + 기입된 내용 텍스트 (길면 말줄임표로 잘림) */}
+                    {/* 달력 셀 내부: 주체 색상 구분 + 기입된 내용 텍스트 */}
                     <div className="mt-0.5 flex w-full flex-col gap-0.5 overflow-hidden">
                       {dayEvents.slice(0, maxVisible).map((ev) => {
                         const meta = SUBJECT_META[ev.category] || SUBJECT_META.together;
@@ -507,7 +673,7 @@ export default function App() {
               })}
             </div>
 
-            {/* 선택한 날짜의 등록된 일정 상세 패널 (스크롤 없이 바로 보이도록 배치) */}
+            {/* 선택한 날짜의 등록된 일정 상세 패널 */}
             <div className="rounded-2xl border border-zinc-800 bg-zinc-900/95 p-3 shadow-lg">
               <div className="mb-2 flex items-center justify-between">
                 <div className="flex items-center gap-2">
@@ -517,9 +683,7 @@ export default function App() {
                       {selectedHoliday}
                     </span>
                   )}
-                  <span className="text-[11px] text-zinc-400">
-                    ({selectedDayEvents.length}건)
-                  </span>
+                  <span className="text-[11px] text-zinc-400">({selectedDayEvents.length}건)</span>
                 </div>
                 <button
                   onClick={() => {
@@ -569,7 +733,7 @@ export default function App() {
                           </div>
                         </div>
                         <button
-                          onClick={() => setEvents((prev) => prev.filter((item) => item.id !== ev.id))}
+                          onClick={() => handleDeleteEvent(ev.id)}
                           className="shrink-0 text-zinc-500 transition hover:text-rose-400"
                           title="일정 삭제"
                         >
@@ -588,22 +752,7 @@ export default function App() {
           <div className="space-y-4 p-4">
             <h2 className="text-base font-bold text-zinc-100">데이트 위시리스트</h2>
             <form
-              onSubmit={(e) => {
-                e.preventDefault();
-                if (!newWishTitle.trim()) return;
-                setWishes((prev) => [
-                  ...prev,
-                  {
-                    id: Date.now().toString(),
-                    title: newWishTitle,
-                    location: newWishLoc || '서울',
-                    tag: '데이트',
-                    author: currentUser
-                  }
-                ]);
-                setNewWishTitle('');
-                setNewWishLoc('');
-              }}
+              onSubmit={handleAddWish}
               className="space-y-2 rounded-2xl border border-zinc-800 bg-zinc-900 p-3"
             >
               <input
@@ -661,23 +810,14 @@ export default function App() {
                 <input
                   type="date"
                   value={startDate}
-                  onChange={(e) => setStartDate(e.target.value)}
+                  onChange={(e) => handleUpdateStartDate(e.target.value)}
                   className="rounded bg-black/25 px-2 py-0.5 text-white"
                 />
               </div>
             </div>
 
             <form
-              onSubmit={(e) => {
-                e.preventDefault();
-                if (!newMemTitle.trim()) return;
-                setMemories((prev) => [
-                  { id: Date.now().toString(), date: selectedDate, title: newMemTitle, note: newMemNote },
-                  ...prev
-                ]);
-                setNewMemTitle('');
-                setNewMemNote('');
-              }}
+              onSubmit={handleAddMemory}
               className="space-y-2 rounded-2xl border border-zinc-800 bg-zinc-900 p-3"
             >
               <input
