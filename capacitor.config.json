@@ -1,0 +1,9 @@
+{
+  "appId": "com.ourdul.couplecalendar",
+  "appName": "우리둘 캘린더",
+  "webDir": "dist",
+  "bundledWebRuntime": false,
+  "server": {
+    "androidScheme": "https"
+  }
+}
