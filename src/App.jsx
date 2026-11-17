@@ -18,6 +18,7 @@ import {
   MapPin,
   Clock,
   Trash2,
+  Pencil,
   Download,
   Smartphone,
   Share,
@@ -56,6 +57,7 @@ if (isFirebaseConfigured) {
 
 // 두 사람의 공유 데이터 경로 (또또 & 뚜뚜 전용 공간)
 const COUPLE_ROOM_ID = 'ttotto-ttuttu-shared';
+const DEFAULT_START_DATE = '2020-04-19';
 
 // 대한민국 법정공휴일 및 대체공휴일 (2025 ~ 2027)
 const KOREAN_HOLIDAYS = {
@@ -128,21 +130,40 @@ export default function App() {
     return saved ? JSON.parse(saved) : [];
   });
 
-  const [startDate, setStartDate] = useState(() => localStorage.getItem('couple_start_date') || '2025-05-01');
+  // 처음 만난 날: 2020-04-19 기본 적용 (기존 기본값 2025-05-01이 남아있으면 2020-04-19로 자동 교체)
+  const [startDate, setStartDate] = useState(() => {
+    const saved = localStorage.getItem('couple_start_date');
+    if (!saved || saved === '2025-05-01') return DEFAULT_START_DATE;
+    return saved;
+  });
+
   const [memories, setMemories] = useState(() => {
     if (db) return [];
     const saved = localStorage.getItem('couple_memories_v1');
     return saved ? JSON.parse(saved) : [];
   });
 
-  const [showAddModal, setShowAddModal] = useState(false);
-  const [showNotifModal, setShowNotifModal] = useState(false);
+  // 일정 추가/편집 모달 상태
+  const [showEventModal, setShowEventModal] = useState(false);
+  const [editingEventId, setEditingEventId] = useState(null);
+  const [eventDateInput, setEventDateInput] = useState(todayKey);
   const [newTitle, setNewTitle] = useState('');
   const [newTime, setNewTime] = useState('18:30');
   const [newCategory, setNewCategory] = useState('together');
   const [newLocation, setNewLocation] = useState('');
+
+  // 위시리스트 추가/편집 상태
   const [newWishTitle, setNewWishTitle] = useState('');
   const [newWishLoc, setNewWishLoc] = useState('');
+  const [newWishAuthor, setNewWishAuthor] = useState('boyfriend');
+  const [showWishEditModal, setShowWishEditModal] = useState(false);
+  const [editingWishId, setEditingWishId] = useState(null);
+  const [editWishTitle, setEditWishTitle] = useState('');
+  const [editWishLoc, setEditWishLoc] = useState('');
+  const [editWishAuthor, setEditWishAuthor] = useState('boyfriend');
+
+  // 추억 & 알림 모달 상태
+  const [showNotifModal, setShowNotifModal] = useState(false);
   const [newMemTitle, setNewMemTitle] = useState('');
   const [newMemNote, setNewMemNote] = useState('');
 
@@ -156,9 +177,10 @@ export default function App() {
 
   useEffect(() => {
     localStorage.setItem('couple_current_user', currentUser);
+    setNewWishAuthor(currentUser);
   }, [currentUser]);
 
-  // Firebase Firestore 실시간 구독 + 기존 로컬 일정 자동 업로드 복구
+  // Firebase Firestore 실시간 양방향 구독 (AOS <-> iOS)
   useEffect(() => {
     if (!db) return;
 
@@ -171,7 +193,6 @@ export default function App() {
         setEvents(list);
         setSyncConnected(true);
 
-        // 기기 내부(localStorage)에 남아 있던 기존 일정을 1회 자동 서버 업로드
         if (localStorage.getItem('couple_events_migrated_v1') !== 'true') {
           localStorage.setItem('couple_events_migrated_v1', 'true');
           const localSaved = localStorage.getItem('couple_events_v1');
@@ -184,7 +205,6 @@ export default function App() {
                     await setDoc(doc(db, 'couples', COUPLE_ROOM_ID, 'events', String(ev.id)), ev, { merge: true });
                   }
                 }
-                showToast(`기존 기기 일정 ${parsed.length}건을 클라우드로 복구했습니다!`);
               }
             } catch (e) {
               console.error('기존 일정 마이그레이션 오류:', e);
@@ -201,6 +221,7 @@ export default function App() {
     const wishesRef = collection(db, 'couples', COUPLE_ROOM_ID, 'wishes');
     const unsubWishes = onSnapshot(wishesRef, (snapshot) => {
       const list = snapshot.docs.map((d) => ({ id: d.id, ...d.data() }));
+      list.sort((a, b) => (b.createdAt || '').localeCompare(a.createdAt || ''));
       setWishes(list);
     });
 
@@ -211,10 +232,21 @@ export default function App() {
       setMemories(list);
     });
 
+    // 처음 만난 날(2020-04-19) 양방향 강제 동기화
     const settingsRef = doc(db, 'couples', COUPLE_ROOM_ID, 'settings', 'main');
-    const unsubSettings = onSnapshot(settingsRef, (docSnap) => {
-      if (docSnap.exists() && docSnap.data().startDate) {
-        setStartDate(docSnap.data().startDate);
+    const unsubSettings = onSnapshot(settingsRef, async (docSnap) => {
+      if (docSnap.exists() && docSnap.data().startDate && docSnap.data().startDate !== '2025-05-01') {
+        const remoteDate = docSnap.data().startDate;
+        setStartDate(remoteDate);
+        localStorage.setItem('couple_start_date', remoteDate);
+      } else {
+        setStartDate(DEFAULT_START_DATE);
+        localStorage.setItem('couple_start_date', DEFAULT_START_DATE);
+        try {
+          await setDoc(settingsRef, { startDate: DEFAULT_START_DATE }, { merge: true });
+        } catch (e) {
+          console.error('기념일 초기 동기화 오류:', e);
+        }
       }
     });
 
@@ -227,16 +259,16 @@ export default function App() {
   }, []);
 
   useEffect(() => {
+    localStorage.setItem('couple_start_date', startDate);
+  }, [startDate]);
+
+  useEffect(() => {
     if (!db) localStorage.setItem('couple_events_v1', JSON.stringify(events));
   }, [events]);
 
   useEffect(() => {
     if (!db) localStorage.setItem('couple_wishes_v1', JSON.stringify(wishes));
   }, [wishes]);
-
-  useEffect(() => {
-    if (!db) localStorage.setItem('couple_start_date', startDate);
-  }, [startDate]);
 
   useEffect(() => {
     if (!db) localStorage.setItem('couple_memories_v1', JSON.stringify(memories));
@@ -251,9 +283,13 @@ export default function App() {
     return () => window.removeEventListener('beforeinstallprompt', handler);
   }, []);
 
+  // D-Day 계산 (로컬 자정 기준 정확한 일수 계산)
   const dDayCount = useMemo(() => {
-    const s = new Date(startDate);
-    const diff = Math.floor((new Date(todayKey) - s) / (1000 * 60 * 60 * 24));
+    const [sy, sm, sd] = startDate.split('-').map(Number);
+    const [ty, tm, td] = todayKey.split('-').map(Number);
+    const startObj = new Date(sy, sm - 1, sd);
+    const todayObj = new Date(ty, tm - 1, td);
+    const diff = Math.round((todayObj - startObj) / (1000 * 60 * 60 * 24));
     return diff >= 0 ? `D+${diff + 1}` : `D${diff}`;
   }, [startDate, todayKey]);
 
@@ -270,39 +306,74 @@ export default function App() {
     return cells;
   }, [viewDate]);
 
-  const handleCreateEvent = async (e) => {
+  // 새 일정 추가 모달 열기
+  const openCreateEventModal = () => {
+    setEditingEventId(null);
+    setEventDateInput(selectedDate);
+    setNewCategory('together');
+    setNewTitle('');
+    setNewTime('18:30');
+    setNewLocation('');
+    setShowEventModal(true);
+  };
+
+  // 기존 일정 편집 모달 열기
+  const openEditEventModal = (ev) => {
+    setEditingEventId(ev.id);
+    setEventDateInput(ev.date || selectedDate);
+    setNewCategory(ev.category || 'together');
+    setNewTitle(ev.title || '');
+    setNewTime(ev.time || '18:30');
+    setNewLocation(ev.location || '');
+    setShowEventModal(true);
+  };
+
+  // 일정 저장 (신규 등록 및 수정 겸용)
+  const handleSaveEvent = async (e) => {
     e.preventDefault();
     if (!newTitle.trim()) return;
-    const id = Date.now().toString();
-    const created = {
+
+    const isEditing = Boolean(editingEventId);
+    const id = isEditing ? editingEventId : Date.now().toString();
+    const payload = {
       id,
-      date: selectedDate,
+      date: eventDateInput || selectedDate,
       time: newTime,
       title: newTitle.trim(),
       category: newCategory,
       location: newLocation.trim(),
       author: currentUser,
       notifySameDay: true,
-      createdAt: new Date().toISOString()
+      updatedAt: new Date().toISOString()
     };
 
     if (db) {
       try {
-        await setDoc(doc(db, 'couples', COUPLE_ROOM_ID, 'events', id), created);
-        showToast(`[${SUBJECT_META[newCategory].label}] 일정이 실시간 공유되었습니다!`);
+        await setDoc(doc(db, 'couples', COUPLE_ROOM_ID, 'events', id), payload, { merge: true });
+        showToast(
+          isEditing
+            ? `[${SUBJECT_META[newCategory].label}] 일정이 수정되었습니다!`
+            : `[${SUBJECT_META[newCategory].label}] 일정이 실시간 공유되었습니다!`
+        );
       } catch (err) {
         console.error(err);
         showToast('저장 실패: Firestore 보안 규칙을 확인해주세요.');
         return;
       }
     } else {
-      setEvents((prev) => [...prev, created]);
-      showToast(`[${SUBJECT_META[newCategory].label}] 일정이 기기에 등록되었습니다.`);
+      if (isEditing) {
+        setEvents((prev) => prev.map((item) => (item.id === id ? payload : item)));
+      } else {
+        setEvents((prev) => [...prev, payload]);
+      }
+      showToast(isEditing ? '일정이 수정되었습니다.' : '일정이 등록되었습니다.');
     }
 
+    setSelectedDate(eventDateInput || selectedDate);
+    setShowEventModal(false);
+    setEditingEventId(null);
     setNewTitle('');
     setNewLocation('');
-    setShowAddModal(false);
   };
 
   const handleDeleteEvent = async (id) => {
@@ -314,6 +385,7 @@ export default function App() {
     }
   };
 
+  // 위시리스트 등록 (또또 / 뚜뚜 주체 지정, 날짜 없음)
   const handleAddWish = async (e) => {
     e.preventDefault();
     if (!newWishTitle.trim()) return;
@@ -321,49 +393,65 @@ export default function App() {
     const item = {
       id,
       title: newWishTitle.trim(),
-      location: newWishLoc.trim() || '서울',
-      tag: '데이트',
-      author: currentUser
+      location: newWishLoc.trim(),
+      author: newWishAuthor,
+      createdAt: new Date().toISOString()
     };
     if (db) {
       await setDoc(doc(db, 'couples', COUPLE_ROOM_ID, 'wishes', id), item);
     } else {
-      setWishes((prev) => [...prev, item]);
+      setWishes((prev) => [item, ...prev]);
     }
     setNewWishTitle('');
     setNewWishLoc('');
-    showToast('위시리스트에 추가되었습니다.');
+    showToast(`[${SUBJECT_META[newWishAuthor]?.label || '또또'}] 위시리스트가 추가되었습니다.`);
   };
 
-  const handleConvertWish = async (wish) => {
-    const id = Date.now().toString();
-    const created = {
-      id,
-      date: selectedDate,
-      time: '14:00',
-      title: wish.title,
-      category: 'together',
-      location: wish.location,
-      author: currentUser,
-      notifySameDay: true,
-      createdAt: new Date().toISOString()
+  // 위시리스트 편집 모달 열기
+  const openEditWishModal = (w) => {
+    setEditingWishId(w.id);
+    setEditWishTitle(w.title || '');
+    setEditWishLoc(w.location || '');
+    setEditWishAuthor(w.author === 'girlfriend' ? 'girlfriend' : 'boyfriend');
+    setShowWishEditModal(true);
+  };
+
+  // 위시리스트 수정 저장
+  const handleSaveWishEdit = async (e) => {
+    e.preventDefault();
+    if (!editWishTitle.trim() || !editingWishId) return;
+    const updated = {
+      id: editingWishId,
+      title: editWishTitle.trim(),
+      location: editWishLoc.trim(),
+      author: editWishAuthor,
+      updatedAt: new Date().toISOString()
     };
     if (db) {
-      await setDoc(doc(db, 'couples', COUPLE_ROOM_ID, 'events', id), created);
-      await deleteDoc(doc(db, 'couples', COUPLE_ROOM_ID, 'wishes', wish.id));
+      await setDoc(doc(db, 'couples', COUPLE_ROOM_ID, 'wishes', editingWishId), updated, { merge: true });
     } else {
-      setEvents((prev) => [...prev, created]);
-      setWishes((prev) => prev.filter((w) => w.id !== wish.id));
+      setWishes((prev) => prev.map((w) => (w.id === editingWishId ? { ...w, ...updated } : w)));
     }
-    setActiveTab('calendar');
-    showToast(`'${wish.title}' 일정이 ${selectedDate} [함께] 일정으로 공유되었습니다!`);
+    setShowWishEditModal(false);
+    setEditingWishId(null);
+    showToast('위시리스트가 수정되었습니다.');
+  };
+
+  const handleDeleteWish = async (id) => {
+    if (db) {
+      await deleteDoc(doc(db, 'couples', COUPLE_ROOM_ID, 'wishes', id));
+    } else {
+      setWishes((prev) => prev.filter((w) => w.id !== id));
+    }
+    showToast('위시리스트가 삭제되었습니다.');
   };
 
   const handleUpdateStartDate = async (val) => {
     setStartDate(val);
+    localStorage.setItem('couple_start_date', val);
     if (db) {
       await setDoc(doc(db, 'couples', COUPLE_ROOM_ID, 'settings', 'main'), { startDate: val }, { merge: true });
-      showToast('사귄 날이 양쪽 기기에 동기화되었습니다.');
+      showToast('처음 만난 날이 양쪽 기기에 동기화되었습니다.');
     }
   };
 
@@ -627,6 +715,7 @@ export default function App() {
               })}
             </div>
 
+            {/* 선택한 날짜의 등록된 일정 상세 패널 (수정 및 삭제 지원) */}
             <div className="rounded-2xl border border-zinc-800 bg-zinc-900/95 p-3 shadow-lg">
               <div className="mb-2 flex items-center justify-between">
                 <div className="flex items-center gap-2">
@@ -639,10 +728,7 @@ export default function App() {
                   <span className="text-[11px] text-zinc-400">({selectedDayEvents.length}건)</span>
                 </div>
                 <button
-                  onClick={() => {
-                    setNewCategory('together');
-                    setShowAddModal(true);
-                  }}
+                  onClick={openCreateEventModal}
                   className="flex items-center gap-1 rounded-xl bg-rose-500 px-2.5 py-1 text-xs font-semibold text-white shadow-sm transition hover:bg-rose-600"
                 >
                   <Plus className="h-3.5 w-3.5" /> 일정 추가
@@ -662,7 +748,10 @@ export default function App() {
                         key={ev.id}
                         className={`flex items-start justify-between rounded-xl border p-2.5 ${meta.card}`}
                       >
-                        <div className="min-w-0 flex-1 space-y-1 pr-2">
+                        <div
+                          onClick={() => openEditEventModal(ev)}
+                          className="min-w-0 flex-1 cursor-pointer space-y-1 pr-2"
+                        >
                           <div className="flex items-center gap-1.5">
                             <span className={`shrink-0 rounded-md px-1.5 py-0.5 text-[10px] ${meta.badge}`}>
                               {meta.label}
@@ -678,6 +767,7 @@ export default function App() {
                                 href={`https://map.naver.com/p/search/${encodeURIComponent(ev.location)}`}
                                 target="_blank"
                                 rel="noreferrer"
+                                onClick={(e) => e.stopPropagation()}
                                 className="flex items-center gap-0.5 text-rose-300 underline"
                               >
                                 <MapPin className="h-3 w-3" /> {ev.location}
@@ -685,13 +775,22 @@ export default function App() {
                             )}
                           </div>
                         </div>
-                        <button
-                          onClick={() => handleDeleteEvent(ev.id)}
-                          className="shrink-0 text-zinc-500 transition hover:text-rose-400"
-                          title="일정 삭제"
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </button>
+                        <div className="flex shrink-0 items-center gap-1">
+                          <button
+                            onClick={() => openEditEventModal(ev)}
+                            className="rounded-lg p-1.5 text-zinc-400 transition hover:bg-zinc-800 hover:text-zinc-100"
+                            title="일정 수정"
+                          >
+                            <Pencil className="h-3.5 w-3.5" />
+                          </button>
+                          <button
+                            onClick={() => handleDeleteEvent(ev.id)}
+                            className="rounded-lg p-1.5 text-zinc-400 transition hover:bg-zinc-800 hover:text-rose-400"
+                            title="일정 삭제"
+                          >
+                            <Trash2 className="h-3.5 w-3.5" />
+                          </button>
+                        </div>
                       </div>
                     );
                   })}
@@ -703,13 +802,41 @@ export default function App() {
 
         {activeTab === 'wishlist' && (
           <div className="space-y-4 p-4">
-            <h2 className="text-base font-bold text-zinc-100">데이트 위시리스트</h2>
-            <form onSubmit={handleAddWish} className="space-y-2 rounded-2xl border border-zinc-800 bg-zinc-900 p-3">
+            <div className="flex items-center justify-between">
+              <h2 className="text-base font-bold text-zinc-100">우리둘 위시리스트</h2>
+              <span className="text-[11px] text-zinc-400">날짜 없이 자유롭게 기록 · 수정</span>
+            </div>
+
+            {/* 위시리스트 등록 폼: 또또 / 뚜뚜 주체 선택 가능 */}
+            <form onSubmit={handleAddWish} className="space-y-2.5 rounded-2xl border border-zinc-800 bg-zinc-900 p-3.5">
+              <div className="flex items-center justify-between">
+                <span className="text-[11px] font-semibold text-zinc-400">작성 주체 선택</span>
+                <div className="flex gap-1.5">
+                  {(['boyfriend', 'girlfriend']).map((key) => {
+                    const meta = SUBJECT_META[key];
+                    const active = newWishAuthor === key;
+                    return (
+                      <button
+                        type="button"
+                        key={key}
+                        onClick={() => setNewWishAuthor(key)}
+                        className={`rounded-xl px-3 py-1 text-xs transition ${
+                          active ? meta.badge : 'bg-zinc-800 text-zinc-400 hover:bg-zinc-700'
+                        }`}
+                      >
+                        {meta.label}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+
               <input
                 type="text"
+                required
                 value={newWishTitle}
                 onChange={(e) => setNewWishTitle(e.target.value)}
-                placeholder="가고 싶은 맛집, 전시, 여행지"
+                placeholder="가고 싶은 맛집, 전시, 여행지, 하고 싶은 것"
                 className="w-full rounded-xl border border-zinc-700 bg-zinc-950 px-3 py-2 text-xs text-zinc-100 placeholder-zinc-500 focus:border-rose-500 focus:outline-none"
               />
               <div className="flex gap-2">
@@ -717,33 +844,71 @@ export default function App() {
                   type="text"
                   value={newWishLoc}
                   onChange={(e) => setNewWishLoc(e.target.value)}
-                  placeholder="위치 (예: 연남동)"
+                  placeholder="장소 또는 메모 (선택 입력)"
                   className="flex-1 rounded-xl border border-zinc-700 bg-zinc-950 px-3 py-2 text-xs text-zinc-100 placeholder-zinc-500 focus:border-rose-500 focus:outline-none"
                 />
-                <button type="submit" className="rounded-xl bg-rose-500 px-4 py-2 text-xs font-semibold text-white">
-                  담기
+                <button
+                  type="submit"
+                  className="shrink-0 rounded-xl bg-rose-500 px-4 py-2 text-xs font-semibold text-white transition hover:bg-rose-600"
+                >
+                  등록
                 </button>
               </div>
             </form>
 
-            <div className="space-y-2">
-              {wishes.map((w) => (
-                <div key={w.id} className="flex items-center justify-between rounded-2xl border border-zinc-800 bg-zinc-900/90 p-3">
-                  <div>
-                    <p className="text-xs font-bold text-zinc-100">{w.title}</p>
-                    <p className="text-[11px] text-zinc-400">
-                      {w.location} · {w.author === 'boyfriend' ? '또또 추천' : '뚜뚜 추천'}
-                    </p>
-                  </div>
-                  <button
-                    onClick={() => handleConvertWish(w)}
-                    className="rounded-xl bg-rose-500/20 px-3 py-1.5 text-xs font-semibold text-rose-300 ring-1 ring-rose-500/30 hover:bg-rose-500/30"
-                  >
-                    {selectedDate}에 확정
-                  </button>
-                </div>
-              ))}
-            </div>
+            {/* 위시리스트 목록 (날짜 없음, 수정/삭제 버튼 제공) */}
+            {wishes.length === 0 ? (
+              <p className="py-6 text-center text-xs text-zinc-500">
+                아직 등록된 위시리스트가 없습니다. 위에서 또또 · 뚜뚜의 위시를 남겨보세요!
+              </p>
+            ) : (
+              <div className="space-y-2">
+                {wishes.map((w) => {
+                  const authorKey = w.author === 'girlfriend' ? 'girlfriend' : 'boyfriend';
+                  const meta = SUBJECT_META[authorKey];
+                  return (
+                    <div
+                      key={w.id}
+                      className={`flex items-center justify-between rounded-2xl border p-3 ${meta.card}`}
+                    >
+                      <div
+                        onClick={() => openEditWishModal(w)}
+                        className="min-w-0 flex-1 cursor-pointer space-y-1 pr-2"
+                      >
+                        <div className="flex items-center gap-1.5">
+                          <span className={`shrink-0 rounded-md px-1.5 py-0.5 text-[10px] ${meta.badge}`}>
+                            {meta.label}
+                          </span>
+                          <p className="break-words text-xs font-bold text-zinc-100">{w.title}</p>
+                        </div>
+                        {w.location && (
+                          <p className="flex items-center gap-1 text-[11px] text-zinc-400">
+                            <MapPin className="h-3 w-3 text-rose-300" /> {w.location}
+                          </p>
+                        )}
+                      </div>
+
+                      <div className="flex shrink-0 items-center gap-1">
+                        <button
+                          onClick={() => openEditWishModal(w)}
+                          className="flex items-center gap-1 rounded-xl bg-zinc-800/90 px-2.5 py-1.5 text-[11px] font-semibold text-zinc-200 transition hover:bg-zinc-700"
+                          title="위시 수정"
+                        >
+                          <Pencil className="h-3 w-3" /> 수정
+                        </button>
+                        <button
+                          onClick={() => handleDeleteWish(w.id)}
+                          className="rounded-xl bg-zinc-800/90 p-1.5 text-zinc-400 transition hover:bg-zinc-700 hover:text-rose-400"
+                          title="위시 삭제"
+                        >
+                          <Trash2 className="h-3.5 w-3.5" />
+                        </button>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
           </div>
         )}
 
@@ -753,7 +918,7 @@ export default function App() {
               <p className="text-xs opacity-90">또또 ♥ 뚜뚜 함께한 시간</p>
               <p className="mt-1 text-2xl font-extrabold">{dDayCount}</p>
               <div className="mt-2 flex items-center gap-2 text-xs">
-                <span>사귄 날:</span>
+                <span>처음 만난 날:</span>
                 <input
                   type="date"
                   value={startDate}
@@ -867,15 +1032,18 @@ export default function App() {
         })}
       </nav>
 
-      {showAddModal && (
+      {/* 캘린더 일정 추가 / 수정 모달 */}
+      {showEventModal && (
         <div className="fixed inset-0 z-40 flex items-end justify-center bg-black/70 p-4 backdrop-blur-sm sm:items-center">
           <form
-            onSubmit={handleCreateEvent}
+            onSubmit={handleSaveEvent}
             className="w-full max-w-md space-y-3.5 rounded-3xl border border-zinc-800 bg-zinc-900 p-5 shadow-2xl"
           >
             <div className="flex items-center justify-between">
-              <h3 className="text-sm font-bold text-zinc-100">{selectedDate} 새 일정 등록</h3>
-              <button type="button" onClick={() => setShowAddModal(false)}>
+              <h3 className="text-sm font-bold text-zinc-100">
+                {editingEventId ? '등록된 일정 수정' : `${selectedDate} 새 일정 등록`}
+              </h3>
+              <button type="button" onClick={() => setShowEventModal(false)}>
                 <X className="h-4 w-4 text-zinc-400 hover:text-zinc-200" />
               </button>
             </div>
@@ -912,25 +1080,96 @@ export default function App() {
 
             <div className="grid grid-cols-2 gap-2">
               <input
+                type="date"
+                value={eventDateInput}
+                onChange={(e) => setEventDateInput(e.target.value)}
+                className="rounded-xl border border-zinc-700 bg-zinc-950 px-3 py-2 text-xs text-zinc-100 focus:border-rose-500 focus:outline-none"
+              />
+              <input
                 type="time"
                 value={newTime}
                 onChange={(e) => setNewTime(e.target.value)}
                 className="rounded-xl border border-zinc-700 bg-zinc-950 px-3 py-2 text-xs text-zinc-100 focus:border-rose-500 focus:outline-none"
               />
-              <input
-                type="text"
-                value={newLocation}
-                onChange={(e) => setNewLocation(e.target.value)}
-                placeholder="장소 (지도 연동)"
-                className="rounded-xl border border-zinc-700 bg-zinc-950 px-3 py-2 text-xs text-zinc-100 placeholder-zinc-500 focus:border-rose-500 focus:outline-none"
-              />
             </div>
+
+            <input
+              type="text"
+              value={newLocation}
+              onChange={(e) => setNewLocation(e.target.value)}
+              placeholder="장소 (지도 연동 · 선택 입력)"
+              className="w-full rounded-xl border border-zinc-700 bg-zinc-950 px-3 py-2 text-xs text-zinc-100 placeholder-zinc-500 focus:border-rose-500 focus:outline-none"
+            />
 
             <button
               type="submit"
               className="w-full rounded-2xl bg-rose-500 py-3 text-xs font-bold text-white shadow-lg shadow-rose-500/20 hover:bg-rose-600"
             >
-              [{SUBJECT_META[newCategory].label}] 일정 등록하기
+              {editingEventId
+                ? `[${SUBJECT_META[newCategory].label}] 일정 수정 저장`
+                : `[${SUBJECT_META[newCategory].label}] 일정 등록하기`}
+            </button>
+          </form>
+        </div>
+      )}
+
+      {/* 위시리스트 수정 모달 */}
+      {showWishEditModal && (
+        <div className="fixed inset-0 z-40 flex items-end justify-center bg-black/70 p-4 backdrop-blur-sm sm:items-center">
+          <form
+            onSubmit={handleSaveWishEdit}
+            className="w-full max-w-md space-y-3.5 rounded-3xl border border-zinc-800 bg-zinc-900 p-5 shadow-2xl"
+          >
+            <div className="flex items-center justify-between">
+              <h3 className="text-sm font-bold text-zinc-100">위시리스트 수정</h3>
+              <button type="button" onClick={() => setShowWishEditModal(false)}>
+                <X className="h-4 w-4 text-zinc-400 hover:text-zinc-200" />
+              </button>
+            </div>
+
+            <div className="space-y-1.5">
+              <label className="text-[11px] font-semibold text-zinc-400">작성 주체</label>
+              <div className="grid grid-cols-2 gap-1.5">
+                {(['boyfriend', 'girlfriend']).map((key) => {
+                  const meta = SUBJECT_META[key];
+                  return (
+                    <button
+                      type="button"
+                      key={key}
+                      onClick={() => setEditWishAuthor(key)}
+                      className={`rounded-xl py-2 text-xs transition ${
+                        editWishAuthor === key ? meta.badge : 'bg-zinc-800 text-zinc-400 hover:bg-zinc-700'
+                      }`}
+                    >
+                      {meta.label}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+
+            <input
+              type="text"
+              required
+              value={editWishTitle}
+              onChange={(e) => setEditWishTitle(e.target.value)}
+              placeholder="위시리스트 내용"
+              className="w-full rounded-xl border border-zinc-700 bg-zinc-950 px-3 py-2.5 text-xs text-zinc-100 placeholder-zinc-500 focus:border-rose-500 focus:outline-none"
+            />
+
+            <input
+              type="text"
+              value={editWishLoc}
+              onChange={(e) => setEditWishLoc(e.target.value)}
+              placeholder="장소 또는 메모 (선택 입력)"
+              className="w-full rounded-xl border border-zinc-700 bg-zinc-950 px-3 py-2 text-xs text-zinc-100 placeholder-zinc-500 focus:border-rose-500 focus:outline-none"
+            />
+
+            <button
+              type="submit"
+              className="w-full rounded-2xl bg-rose-500 py-3 text-xs font-bold text-white shadow-lg shadow-rose-500/20 hover:bg-rose-600"
+            >
+              수정 내용 저장하기
             </button>
           </form>
         </div>
