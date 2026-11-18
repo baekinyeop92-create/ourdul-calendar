@@ -18,14 +18,19 @@ import {
   MapPin,
   Clock,
   Trash2,
+  Pencil,
   Download,
   Smartphone,
   Share,
+  Share2,
   Gift,
   Camera,
   X,
   Cloud,
-  CloudOff
+  CloudOff,
+  Image as ImageIcon,
+  ExternalLink,
+  Link as LinkIcon
 } from 'lucide-react';
 
 const FIREBASE_CONFIG = {
@@ -56,70 +61,26 @@ if (isFirebaseConfigured) {
 
 // 두 사람의 공유 데이터 경로 (또또 & 뚜뚜 전용 공간)
 const COUPLE_ROOM_ID = 'ttotto-ttuttu-shared';
+const DEFAULT_START_DATE = '2020-04-19';
 
 // 대한민국 법정공휴일 및 대체공휴일 (2025 ~ 2027)
 const KOREAN_HOLIDAYS = {
-  // 2025
-  '2025-01-01': '신정',
-  '2025-01-28': '설날 연휴',
-  '2025-01-29': '설날',
-  '2025-01-30': '설날 연휴',
-  '2025-03-01': '삼일절',
-  '2025-03-03': '대체공휴일',
-  '2025-05-05': '어린이날',
-  '2025-05-06': '대체공휴일',
-  '2025-06-06': '현충일',
-  '2025-08-15': '광복절',
-  '2025-10-03': '개천절',
-  '2025-10-05': '추석 연휴',
-  '2025-10-06': '추석',
-  '2025-10-07': '추석 연휴',
-  '2025-10-08': '대체공휴일',
-  '2025-10-09': '한글날',
-  '2025-12-25': '성탄절',
-  // 2026
-  '2026-01-01': '신정',
-  '2026-02-16': '설날 연휴',
-  '2026-02-17': '설날',
-  '2026-02-18': '설날 연휴',
-  '2026-03-01': '삼일절',
-  '2026-03-02': '대체공휴일',
-  '2026-05-05': '어린이날',
-  '2026-05-24': '부처님오신날',
-  '2026-05-25': '대체공휴일',
-  '2026-06-06': '현충일',
-  '2026-08-15': '광복절',
-  '2026-08-17': '대체공휴일',
-  '2026-09-24': '추석 연휴',
-  '2026-09-25': '추석',
-  '2026-09-26': '추석 연휴',
-  '2026-10-03': '개천절',
-  '2026-10-05': '대체공휴일',
-  '2026-10-09': '한글날',
-  '2026-12-25': '성탄절',
-  // 2027
-  '2027-01-01': '신정',
-  '2027-02-06': '설날 연휴',
-  '2027-02-07': '설날',
-  '2027-02-08': '설날 연휴',
-  '2027-02-09': '대체공휴일',
-  '2027-03-01': '삼일절',
-  '2027-05-05': '어린이날',
-  '2027-05-13': '부처님오신날',
-  '2027-06-06': '현충일',
-  '2027-08-15': '광복절',
-  '2027-08-16': '대체공휴일',
-  '2027-09-14': '추석 연휴',
-  '2027-09-15': '추석',
-  '2027-09-16': '추석 연휴',
-  '2027-10-03': '개천절',
-  '2027-10-04': '대체공휴일',
-  '2027-10-09': '한글날',
-  '2027-10-11': '대체공휴일',
-  '2027-12-25': '성탄절'
+  '2025-01-01': '신정', '2025-01-28': '설날 연휴', '2025-01-29': '설날', '2025-01-30': '설날 연휴',
+  '2025-03-01': '삼일절', '2025-03-03': '대체공휴일', '2025-05-05': '어린이날', '2025-05-06': '대체공휴일',
+  '2025-06-06': '현충일', '2025-08-15': '광복절', '2025-10-03': '개천절', '2025-10-05': '추석 연휴',
+  '2025-10-06': '추석', '2025-10-07': '추석 연휴', '2025-10-08': '대체공휴일', '2025-10-09': '한글날', '2025-12-25': '성탄절',
+  '2026-01-01': '신정', '2026-02-16': '설날 연휴', '2026-02-17': '설날', '2026-02-18': '설날 연휴',
+  '2026-03-01': '삼일절', '2026-03-02': '대체공휴일', '2026-05-05': '어린이날', '2026-05-24': '부처님오신날',
+  '2026-05-25': '대체공휴일', '2026-06-06': '현충일', '2026-08-15': '광복절', '2026-08-17': '대체공휴일',
+  '2026-09-24': '추석 연휴', '2026-09-25': '추석', '2026-09-26': '추석 연휴', '2026-10-03': '개천절',
+  '2026-10-05': '대체공휴일', '2026-10-09': '한글날', '2026-12-25': '성탄절',
+  '2027-01-01': '신정', '2027-02-06': '설날 연휴', '2027-02-07': '설날', '2027-02-08': '설날 연휴',
+  '2027-02-09': '대체공휴일', '2027-03-01': '삼일절', '2027-05-05': '어린이날', '2027-05-13': '부처님오신날',
+  '2027-06-06': '현충일', '2027-08-15': '광복절', '2027-08-16': '대체공휴일', '2027-09-14': '추석 연휴',
+  '2027-09-15': '추석', '2027-09-16': '추석 연휴', '2027-10-03': '개천절', '2027-10-04': '대체공휴일',
+  '2027-10-09': '한글날', '2027-10-11': '대체공휴일', '2027-12-25': '성탄절'
 };
 
-// 주체자 구분: 또또 / 뚜뚜 / 함께
 const SUBJECT_META = {
   boyfriend: {
     label: '또또',
@@ -151,55 +112,113 @@ function formatDateKey(date) {
   return `${y}-${m}-${d}`;
 }
 
+// 외부 링크 프로토콜 자동 보정
+function formatExternalUrl(url) {
+  if (!url) return '';
+  const trimmed = url.trim();
+  if (!trimmed) return '';
+  if (/^https?:\/\//i.test(trimmed)) return trimmed;
+  return `https://${trimmed}`;
+}
+
+// 사진을 Firestore에 바로 저장할 수 있도록 경량 Base64 이미지로 압축
+function compressImageFile(file, maxSize = 720, quality = 0.72) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      const img = new Image();
+      img.onload = () => {
+        let width = img.width;
+        let height = img.height;
+        if (width > height && width > maxSize) {
+          height = Math.round((height * maxSize) / width);
+          width = maxSize;
+        } else if (height >= width && height > maxSize) {
+          width = Math.round((width * maxSize) / height);
+          height = maxSize;
+        }
+        const canvas = document.createElement('canvas');
+        canvas.width = width;
+        canvas.height = height;
+        const ctx = canvas.getContext('2d');
+        ctx.drawImage(img, 0, 0, width, height);
+        const dataUrl = canvas.toDataURL('image/jpeg', quality);
+        resolve(dataUrl);
+      };
+      img.onerror = reject;
+      img.src = event.target.result;
+    };
+    reader.onerror = reject;
+    reader.readAsDataURL(file);
+  });
+}
+
 export default function App() {
   const today = useMemo(() => new Date(), []);
   const todayKey = formatDateKey(today);
 
-  const [activeTab, setActiveTab] = useState('calendar'); // calendar | wishlist | memories | install
+  const [activeTab, setActiveTab] = useState('calendar');
   const [currentUser, setCurrentUser] = useState(() => localStorage.getItem('couple_current_user') || 'boyfriend');
   const [viewDate, setViewDate] = useState(new Date(today.getFullYear(), today.getMonth(), 1));
   const [selectedDate, setSelectedDate] = useState(todayKey);
   const [filterCategory, setFilterCategory] = useState('all');
   const [syncConnected, setSyncConnected] = useState(false);
 
-  // States (Firebase 연결 시 실시간 구독, 미연결 시 localStorage 폴백)
   const [events, setEvents] = useState(() => {
-    if (db) return [];
     const saved = localStorage.getItem('couple_events_v1');
     return saved ? JSON.parse(saved) : [];
   });
 
   const [wishes, setWishes] = useState(() => {
-    if (db) return [];
     const saved = localStorage.getItem('couple_wishes_v1');
-    return saved
-      ? JSON.parse(saved)
-      : [
-          { id: 'w1', title: '한강 피크닉 & 치맥', location: '여의도 한강공원', tag: '데이트', author: 'girlfriend' },
-          { id: 'w2', title: '주말 근교 드라이브 카페', location: '남양주 북한강', tag: '드라이브', author: 'boyfriend' }
-        ];
+    return saved ? JSON.parse(saved) : [];
   });
 
-  const [startDate, setStartDate] = useState(() => localStorage.getItem('couple_start_date') || '2025-05-01');
+  // 처음 만난 날: 2020-04-19 기본 적용
+  const [startDate, setStartDate] = useState(() => {
+    const saved = localStorage.getItem('couple_start_date');
+    if (!saved || saved === '2025-05-01') return DEFAULT_START_DATE;
+    return saved;
+  });
+
   const [memories, setMemories] = useState(() => {
     if (db) return [];
     const saved = localStorage.getItem('couple_memories_v1');
     return saved ? JSON.parse(saved) : [];
   });
 
-  // Modals & Inputs
-  const [showAddModal, setShowAddModal] = useState(false);
-  const [showNotifModal, setShowNotifModal] = useState(false);
+  // 일정 추가/편집 모달 상태
+  const [showEventModal, setShowEventModal] = useState(false);
+  const [editingEventId, setEditingEventId] = useState(null);
+  const [eventDateInput, setEventDateInput] = useState(todayKey);
   const [newTitle, setNewTitle] = useState('');
   const [newTime, setNewTime] = useState('18:30');
   const [newCategory, setNewCategory] = useState('together');
   const [newLocation, setNewLocation] = useState('');
+
+  // 위시리스트 추가/편집 상태 (사진 & 링크 포함)
   const [newWishTitle, setNewWishTitle] = useState('');
   const [newWishLoc, setNewWishLoc] = useState('');
+  const [newWishLink, setNewWishLink] = useState('');
+  const [newWishImage, setNewWishImage] = useState('');
+  const [newWishAuthor, setNewWishAuthor] = useState('boyfriend');
+
+  const [showWishEditModal, setShowWishEditModal] = useState(false);
+  const [editingWishId, setEditingWishId] = useState(null);
+  const [editWishTitle, setEditWishTitle] = useState('');
+  const [editWishLoc, setEditWishLoc] = useState('');
+  const [editWishLink, setEditWishLink] = useState('');
+  const [editWishImage, setEditWishImage] = useState('');
+  const [editWishAuthor, setEditWishAuthor] = useState('boyfriend');
+
+  // 사진 원본 확대 보기 모달
+  const [previewImage, setPreviewImage] = useState(null);
+
+  // 추억 & 알림 모달 상태
+  const [showNotifModal, setShowNotifModal] = useState(false);
   const [newMemTitle, setNewMemTitle] = useState('');
   const [newMemNote, setNewMemNote] = useState('');
 
-  // PWA Install Prompt
   const [deferredPrompt, setDeferredPrompt] = useState(null);
   const [toastMsg, setToastMsg] = useState('');
 
@@ -208,23 +227,42 @@ export default function App() {
     setTimeout(() => setToastMsg(''), 3000);
   };
 
-  // 현재 기기 사용자(또또/뚜뚜) 저장
   useEffect(() => {
     localStorage.setItem('couple_current_user', currentUser);
+    setNewWishAuthor(currentUser);
   }, [currentUser]);
 
-  // Firebase Firestore 실시간 양방향 구독 (또또 AOS <-> 뚜뚜 iOS)
+  // Firebase Firestore 실시간 양방향 구독 (AOS <-> iOS)
   useEffect(() => {
     if (!db) return;
 
     const eventsRef = collection(db, 'couples', COUPLE_ROOM_ID, 'events');
     const unsubEvents = onSnapshot(
       eventsRef,
-      (snapshot) => {
+      async (snapshot) => {
         const list = snapshot.docs.map((d) => ({ id: d.id, ...d.data() }));
         list.sort((a, b) => (a.time || '').localeCompare(b.time || ''));
         setEvents(list);
         setSyncConnected(true);
+
+        if (localStorage.getItem('couple_events_migrated_v1') !== 'true') {
+          localStorage.setItem('couple_events_migrated_v1', 'true');
+          const localSaved = localStorage.getItem('couple_events_v1');
+          if (localSaved) {
+            try {
+              const parsed = JSON.parse(localSaved);
+              if (Array.isArray(parsed) && parsed.length > 0) {
+                for (const ev of parsed) {
+                  if (ev && ev.id && ev.title) {
+                    await setDoc(doc(db, 'couples', COUPLE_ROOM_ID, 'events', String(ev.id)), ev, { merge: true });
+                  }
+                }
+              }
+            } catch (e) {
+              console.error('기존 일정 마이그레이션 오류:', e);
+            }
+          }
+        }
       },
       (error) => {
         console.error('일정 동기화 오류:', error);
@@ -233,9 +271,29 @@ export default function App() {
     );
 
     const wishesRef = collection(db, 'couples', COUPLE_ROOM_ID, 'wishes');
-    const unsubWishes = onSnapshot(wishesRef, (snapshot) => {
+    const unsubWishes = onSnapshot(wishesRef, async (snapshot) => {
       const list = snapshot.docs.map((d) => ({ id: d.id, ...d.data() }));
+      list.sort((a, b) => (b.createdAt || '').localeCompare(a.createdAt || ''));
       setWishes(list);
+
+      if (localStorage.getItem('couple_wishes_migrated_v1') !== 'true') {
+        localStorage.setItem('couple_wishes_migrated_v1', 'true');
+        const localWishes = localStorage.getItem('couple_wishes_v1');
+        if (localWishes) {
+          try {
+            const parsed = JSON.parse(localWishes);
+            if (Array.isArray(parsed) && parsed.length > 0) {
+              for (const w of parsed) {
+                if (w && w.id && w.title) {
+                  await setDoc(doc(db, 'couples', COUPLE_ROOM_ID, 'wishes', String(w.id)), w, { merge: true });
+                }
+              }
+            }
+          } catch (e) {
+            console.error('기존 위시리스트 마이그레이션 오류:', e);
+          }
+        }
+      }
     });
 
     const memoriesRef = collection(db, 'couples', COUPLE_ROOM_ID, 'memories');
@@ -246,9 +304,19 @@ export default function App() {
     });
 
     const settingsRef = doc(db, 'couples', COUPLE_ROOM_ID, 'settings', 'main');
-    const unsubSettings = onSnapshot(settingsRef, (docSnap) => {
-      if (docSnap.exists() && docSnap.data().startDate) {
-        setStartDate(docSnap.data().startDate);
+    const unsubSettings = onSnapshot(settingsRef, async (docSnap) => {
+      if (docSnap.exists() && docSnap.data().startDate && docSnap.data().startDate !== '2025-05-01') {
+        const remoteDate = docSnap.data().startDate;
+        setStartDate(remoteDate);
+        localStorage.setItem('couple_start_date', remoteDate);
+      } else {
+        setStartDate(DEFAULT_START_DATE);
+        localStorage.setItem('couple_start_date', DEFAULT_START_DATE);
+        try {
+          await setDoc(settingsRef, { startDate: DEFAULT_START_DATE }, { merge: true });
+        } catch (e) {
+          console.error('기념일 초기 동기화 오류:', e);
+        }
       }
     });
 
@@ -260,7 +328,10 @@ export default function App() {
     };
   }, []);
 
-  // 로컬 폴백 저장 (Firebase 미연결 시에만 동작)
+  useEffect(() => {
+    localStorage.setItem('couple_start_date', startDate);
+  }, [startDate]);
+
   useEffect(() => {
     if (!db) localStorage.setItem('couple_events_v1', JSON.stringify(events));
   }, [events]);
@@ -268,10 +339,6 @@ export default function App() {
   useEffect(() => {
     if (!db) localStorage.setItem('couple_wishes_v1', JSON.stringify(wishes));
   }, [wishes]);
-
-  useEffect(() => {
-    if (!db) localStorage.setItem('couple_start_date', startDate);
-  }, [startDate]);
 
   useEffect(() => {
     if (!db) localStorage.setItem('couple_memories_v1', JSON.stringify(memories));
@@ -286,14 +353,16 @@ export default function App() {
     return () => window.removeEventListener('beforeinstallprompt', handler);
   }, []);
 
-  // D-Day Calculation
+  // D-Day 계산
   const dDayCount = useMemo(() => {
-    const s = new Date(startDate);
-    const diff = Math.floor((new Date(todayKey) - s) / (1000 * 60 * 60 * 24));
+    const [sy, sm, sd] = startDate.split('-').map(Number);
+    const [ty, tm, td] = todayKey.split('-').map(Number);
+    const startObj = new Date(sy, sm - 1, sd);
+    const todayObj = new Date(ty, tm - 1, td);
+    const diff = Math.round((todayObj - startObj) / (1000 * 60 * 60 * 24));
     return diff >= 0 ? `D+${diff + 1}` : `D${diff}`;
   }, [startDate, todayKey]);
 
-  // Calendar Grid
   const calendarDays = useMemo(() => {
     const year = viewDate.getFullYear();
     const month = viewDate.getMonth();
@@ -307,39 +376,71 @@ export default function App() {
     return cells;
   }, [viewDate]);
 
-  const handleCreateEvent = async (e) => {
+  const openCreateEventModal = () => {
+    setEditingEventId(null);
+    setEventDateInput(selectedDate);
+    setNewCategory('together');
+    setNewTitle('');
+    setNewTime('18:30');
+    setNewLocation('');
+    setShowEventModal(true);
+  };
+
+  const openEditEventModal = (ev) => {
+    setEditingEventId(ev.id);
+    setEventDateInput(ev.date || selectedDate);
+    setNewCategory(ev.category || 'together');
+    setNewTitle(ev.title || '');
+    setNewTime(ev.time || '18:30');
+    setNewLocation(ev.location || '');
+    setShowEventModal(true);
+  };
+
+  const handleSaveEvent = async (e) => {
     e.preventDefault();
     if (!newTitle.trim()) return;
-    const id = Date.now().toString();
-    const created = {
+
+    const isEditing = Boolean(editingEventId);
+    const id = isEditing ? editingEventId : Date.now().toString();
+    const payload = {
       id,
-      date: selectedDate,
+      date: eventDateInput || selectedDate,
       time: newTime,
       title: newTitle.trim(),
       category: newCategory,
       location: newLocation.trim(),
       author: currentUser,
       notifySameDay: true,
-      createdAt: new Date().toISOString()
+      updatedAt: new Date().toISOString()
     };
 
     if (db) {
       try {
-        await setDoc(doc(db, 'couples', COUPLE_ROOM_ID, 'events', id), created);
-        showToast(`[${SUBJECT_META[newCategory].label}] 일정이 실시간 공유되었습니다!`);
+        await setDoc(doc(db, 'couples', COUPLE_ROOM_ID, 'events', id), payload, { merge: true });
+        showToast(
+          isEditing
+            ? `[${SUBJECT_META[newCategory].label}] 일정이 수정되었습니다!`
+            : `[${SUBJECT_META[newCategory].label}] 일정이 실시간 공유되었습니다!`
+        );
       } catch (err) {
         console.error(err);
         showToast('저장 실패: Firestore 보안 규칙을 확인해주세요.');
         return;
       }
     } else {
-      setEvents((prev) => [...prev, created]);
-      showToast(`[${SUBJECT_META[newCategory].label}] 일정이 기기에 등록되었습니다.`);
+      if (isEditing) {
+        setEvents((prev) => prev.map((item) => (item.id === id ? payload : item)));
+      } else {
+        setEvents((prev) => [...prev, payload]);
+      }
+      showToast(isEditing ? '일정이 수정되었습니다.' : '일정이 등록되었습니다.');
     }
 
+    setSelectedDate(eventDateInput || selectedDate);
+    setShowEventModal(false);
+    setEditingEventId(null);
     setNewTitle('');
     setNewLocation('');
-    setShowAddModal(false);
   };
 
   const handleDeleteEvent = async (id) => {
@@ -351,56 +452,189 @@ export default function App() {
     }
   };
 
+  // 위시리스트 사진 선택 및 압축 처리
+  const handleWishImageSelect = async (e, isEdit = false) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    try {
+      const compressedDataUrl = await compressImageFile(file);
+      if (isEdit) {
+        setEditWishImage(compressedDataUrl);
+      } else {
+        setNewWishImage(compressedDataUrl);
+      }
+      showToast('사진이 첨부되었습니다.');
+    } catch (err) {
+      console.error('이미지 처리 오류:', err);
+      showToast('사진을 불러오지 못했습니다.');
+    } finally {
+      e.target.value = '';
+    }
+  };
+
+  // 위시리스트 등록 (주체, 제목, 장소/메모, 링크, 사진 포함)
   const handleAddWish = async (e) => {
     e.preventDefault();
     if (!newWishTitle.trim()) return;
     const id = Date.now().toString();
+    const formattedLink = formatExternalUrl(newWishLink);
     const item = {
       id,
       title: newWishTitle.trim(),
-      location: newWishLoc.trim() || '서울',
-      tag: '데이트',
-      author: currentUser
-    };
-    if (db) {
-      await setDoc(doc(db, 'couples', COUPLE_ROOM_ID, 'wishes', id), item);
-    } else {
-      setWishes((prev) => [...prev, item]);
-    }
-    setNewWishTitle('');
-    setNewWishLoc('');
-    showToast('위시리스트에 추가되었습니다.');
-  };
-
-  const handleConvertWish = async (wish) => {
-    const id = Date.now().toString();
-    const created = {
-      id,
-      date: selectedDate,
-      time: '14:00',
-      title: wish.title,
-      category: 'together',
-      location: wish.location,
-      author: currentUser,
-      notifySameDay: true,
+      location: newWishLoc.trim(),
+      link: formattedLink,
+      imageUrl: newWishImage || '',
+      author: newWishAuthor,
       createdAt: new Date().toISOString()
     };
     if (db) {
-      await setDoc(doc(db, 'couples', COUPLE_ROOM_ID, 'events', id), created);
-      await deleteDoc(doc(db, 'couples', COUPLE_ROOM_ID, 'wishes', wish.id));
+      try {
+        await setDoc(doc(db, 'couples', COUPLE_ROOM_ID, 'wishes', id), item);
+        showToast(`[${SUBJECT_META[newWishAuthor]?.label || '또또'}] 위시리스트가 실시간 공유되었습니다!`);
+      } catch (err) {
+        console.error(err);
+        showToast('위시 저장 실패: 사진 용량이나 규칙을 확인해주세요.');
+        return;
+      }
     } else {
-      setEvents((prev) => [...prev, created]);
-      setWishes((prev) => prev.filter((w) => w.id !== wish.id));
+      setWishes((prev) => [item, ...prev]);
+      showToast(`[${SUBJECT_META[newWishAuthor]?.label || '또또'}] 위시리스트가 추가되었습니다.`);
     }
-    setActiveTab('calendar');
-    showToast(`'${wish.title}' 일정이 ${selectedDate} [함께] 일정으로 공유되었습니다!`);
+    setNewWishTitle('');
+    setNewWishLoc('');
+    setNewWishLink('');
+    setNewWishImage('');
+  };
+
+  // 위시리스트 편집 모달 열기
+  const openEditWishModal = (w) => {
+    setEditingWishId(w.id);
+    setEditWishTitle(w.title || '');
+    setEditWishLoc(w.location || '');
+    setEditWishLink(w.link || '');
+    setEditWishImage(w.imageUrl || '');
+    setEditWishAuthor(w.author === 'girlfriend' ? 'girlfriend' : 'boyfriend');
+    setShowWishEditModal(true);
+  };
+
+  // 위시리스트 수정 저장
+  const handleSaveWishEdit = async (e) => {
+    e.preventDefault();
+    if (!editWishTitle.trim() || !editingWishId) return;
+    const formattedLink = formatExternalUrl(editWishLink);
+    const updated = {
+      id: editingWishId,
+      title: editWishTitle.trim(),
+      location: editWishLoc.trim(),
+      link: formattedLink,
+      imageUrl: editWishImage || '',
+      author: editWishAuthor,
+      updatedAt: new Date().toISOString()
+    };
+    if (db) {
+      await setDoc(doc(db, 'couples', COUPLE_ROOM_ID, 'wishes', editingWishId), updated, { merge: true });
+    } else {
+      setWishes((prev) => prev.map((w) => (w.id === editingWishId ? { ...w, ...updated } : w)));
+    }
+    setShowWishEditModal(false);
+    setEditingWishId(null);
+    showToast('위시리스트가 수정되었습니다.');
+  };
+
+  const handleDeleteWish = async (id) => {
+    if (db) {
+      await deleteDoc(doc(db, 'couples', COUPLE_ROOM_ID, 'wishes', id));
+    } else {
+      setWishes((prev) => prev.filter((w) => w.id !== id));
+    }
+    showToast('위시리스트가 삭제되었습니다.');
+  };
+
+  // 개별 위시리스트 공유 (링크 포함)
+  const handleShareWish = async (w) => {
+    const authorLabel = w.author === 'girlfriend' ? '뚜뚜' : '또또';
+    const mapUrl = w.location ? `https://map.naver.com/p/search/${encodeURIComponent(w.location)}` : '';
+    const lines = [
+      `💝 [우리둘 위시리스트 · ${authorLabel}]`,
+      `• ${w.title}`,
+      w.location ? `📍 장소/메모: ${w.location}` : null,
+      w.link ? `🔗 참고 링크: ${w.link}` : null,
+      !w.link && mapUrl ? `🗺️ 지도 보기: ${mapUrl}` : null
+    ].filter(Boolean);
+    const shareText = lines.join('\n');
+
+    if (navigator.share) {
+      try {
+        await navigator.share({
+          title: `우리둘 위시리스트 · ${w.title}`,
+          text: shareText,
+          url: w.link || window.location.origin
+        });
+        return;
+      } catch (err) {
+        if (err.name === 'AbortError') return;
+      }
+    }
+
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      try {
+        await navigator.clipboard.writeText(shareText);
+        showToast('위시리스트 내용이 복사되었습니다! 카톡이나 메시지에 붙여넣어 공유하세요.');
+        return;
+      } catch (err) {
+        console.error(err);
+      }
+    }
+    showToast('공유 기능을 실행할 수 없습니다.');
+  };
+
+  // 전체 위시리스트 목록 한 번에 공유
+  const handleShareAllWishes = async () => {
+    if (wishes.length === 0) {
+      showToast('공유할 위시리스트가 없습니다.');
+      return;
+    }
+    const itemLines = wishes.map((w, idx) => {
+      const label = w.author === 'girlfriend' ? '뚜뚜' : '또또';
+      const locText = w.location ? ` (${w.location})` : '';
+      const linkText = w.link ? `\n   🔗 ${w.link}` : '';
+      return `${idx + 1}. [${label}] ${w.title}${locText}${linkText}`;
+    });
+    const shareText = [
+      `💝 [또또 ♥ 뚜뚜 우리둘 위시리스트 (${wishes.length}건)]`,
+      ...itemLines,
+      `\n📅 우리둘 캘린더: ${window.location.origin}`
+    ].join('\n');
+
+    if (navigator.share) {
+      try {
+        await navigator.share({
+          title: '또또 ♥ 뚜뚜 위시리스트',
+          text: shareText
+        });
+        return;
+      } catch (err) {
+        if (err.name === 'AbortError') return;
+      }
+    }
+
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      try {
+        await navigator.clipboard.writeText(shareText);
+        showToast('전체 위시리스트가 복사되었습니다! 카톡에 붙여넣어 공유하세요.');
+        return;
+      } catch (err) {
+        console.error(err);
+      }
+    }
   };
 
   const handleUpdateStartDate = async (val) => {
     setStartDate(val);
+    localStorage.setItem('couple_start_date', val);
     if (db) {
       await setDoc(doc(db, 'couples', COUPLE_ROOM_ID, 'settings', 'main'), { startDate: val }, { merge: true });
-      showToast('사귄 날이 양쪽 기기에 동기화되었습니다.');
+      showToast('처음 만난 날이 양쪽 기기에 동기화되었습니다.');
     }
   };
 
@@ -467,14 +701,12 @@ export default function App() {
 
   return (
     <div className="mx-auto flex min-h-screen max-w-md flex-col border-x border-zinc-900 bg-zinc-950 text-zinc-100 shadow-2xl">
-      {/* Toast */}
       {toastMsg && (
         <div className="fixed left-1/2 top-4 z-50 -translate-x-1/2 rounded-full border border-zinc-700 bg-zinc-900/95 px-4 py-2 text-xs font-medium text-zinc-100 shadow-xl backdrop-blur">
           {toastMsg}
         </div>
       )}
 
-      {/* Top Header */}
       <header className="sticky top-0 z-20 border-b border-zinc-800/80 bg-zinc-950/95 px-4 py-2.5 backdrop-blur">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
@@ -503,7 +735,6 @@ export default function App() {
           </div>
 
           <div className="flex items-center gap-1.5">
-            {/* 접속 사용자 전환 스위치 */}
             <button
               onClick={() => setCurrentUser((u) => (u === 'boyfriend' ? 'girlfriend' : 'boyfriend'))}
               className={`rounded-full px-2.5 py-1 text-[11px] font-semibold transition ${
@@ -536,11 +767,9 @@ export default function App() {
         </div>
       </header>
 
-      {/* Main Content */}
       <main className="flex-1 overflow-y-auto pb-20">
         {activeTab === 'calendar' && (
           <div className="space-y-2.5 p-3">
-            {/* Month Nav & 주체별 색상 범례/필터 */}
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-1">
                 <button
@@ -560,7 +789,6 @@ export default function App() {
                 </button>
               </div>
 
-              {/* 색상 범례 겸 필터 */}
               <div className="flex items-center gap-1 text-[10px]">
                 <button
                   onClick={() => setFilterCategory('all')}
@@ -593,7 +821,6 @@ export default function App() {
               </div>
             </div>
 
-            {/* Weekday Header */}
             <div className="grid grid-cols-7 text-center text-[11px] font-semibold text-zinc-500">
               {['일', '월', '화', '수', '목', '금', '토'].map((w, idx) => (
                 <div key={w} className={idx === 0 ? 'text-rose-400' : idx === 6 ? 'text-sky-400' : ''}>
@@ -602,7 +829,6 @@ export default function App() {
               ))}
             </div>
 
-            {/* Days Grid */}
             <div className="grid grid-cols-7 gap-1">
               {calendarDays.map((dateObj, idx) => {
                 if (!dateObj) return <div key={`empty-${idx}`} className="min-h-[58px]" />;
@@ -648,7 +874,6 @@ export default function App() {
                       )}
                     </div>
 
-                    {/* 달력 셀 내부: 주체 색상 구분 + 기입된 내용 텍스트 */}
                     <div className="mt-0.5 flex w-full flex-col gap-0.5 overflow-hidden">
                       {dayEvents.slice(0, maxVisible).map((ev) => {
                         const meta = SUBJECT_META[ev.category] || SUBJECT_META.together;
@@ -673,7 +898,6 @@ export default function App() {
               })}
             </div>
 
-            {/* 선택한 날짜의 등록된 일정 상세 패널 */}
             <div className="rounded-2xl border border-zinc-800 bg-zinc-900/95 p-3 shadow-lg">
               <div className="mb-2 flex items-center justify-between">
                 <div className="flex items-center gap-2">
@@ -686,10 +910,7 @@ export default function App() {
                   <span className="text-[11px] text-zinc-400">({selectedDayEvents.length}건)</span>
                 </div>
                 <button
-                  onClick={() => {
-                    setNewCategory('together');
-                    setShowAddModal(true);
-                  }}
+                  onClick={openCreateEventModal}
                   className="flex items-center gap-1 rounded-xl bg-rose-500 px-2.5 py-1 text-xs font-semibold text-white shadow-sm transition hover:bg-rose-600"
                 >
                   <Plus className="h-3.5 w-3.5" /> 일정 추가
@@ -709,7 +930,10 @@ export default function App() {
                         key={ev.id}
                         className={`flex items-start justify-between rounded-xl border p-2.5 ${meta.card}`}
                       >
-                        <div className="min-w-0 flex-1 space-y-1 pr-2">
+                        <div
+                          onClick={() => openEditEventModal(ev)}
+                          className="min-w-0 flex-1 cursor-pointer space-y-1 pr-2"
+                        >
                           <div className="flex items-center gap-1.5">
                             <span className={`shrink-0 rounded-md px-1.5 py-0.5 text-[10px] ${meta.badge}`}>
                               {meta.label}
@@ -725,6 +949,7 @@ export default function App() {
                                 href={`https://map.naver.com/p/search/${encodeURIComponent(ev.location)}`}
                                 target="_blank"
                                 rel="noreferrer"
+                                onClick={(e) => e.stopPropagation()}
                                 className="flex items-center gap-0.5 text-rose-300 underline"
                               >
                                 <MapPin className="h-3 w-3" /> {ev.location}
@@ -732,13 +957,22 @@ export default function App() {
                             )}
                           </div>
                         </div>
-                        <button
-                          onClick={() => handleDeleteEvent(ev.id)}
-                          className="shrink-0 text-zinc-500 transition hover:text-rose-400"
-                          title="일정 삭제"
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </button>
+                        <div className="flex shrink-0 items-center gap-1">
+                          <button
+                            onClick={() => openEditEventModal(ev)}
+                            className="rounded-lg p-1.5 text-zinc-400 transition hover:bg-zinc-800 hover:text-zinc-100"
+                            title="일정 수정"
+                          >
+                            <Pencil className="h-3.5 w-3.5" />
+                          </button>
+                          <button
+                            onClick={() => handleDeleteEvent(ev.id)}
+                            className="rounded-lg p-1.5 text-zinc-400 transition hover:bg-zinc-800 hover:text-rose-400"
+                            title="일정 삭제"
+                          >
+                            <Trash2 className="h-3.5 w-3.5" />
+                          </button>
+                        </div>
                       </div>
                     );
                   })}
@@ -750,53 +984,209 @@ export default function App() {
 
         {activeTab === 'wishlist' && (
           <div className="space-y-4 p-4">
-            <h2 className="text-base font-bold text-zinc-100">데이트 위시리스트</h2>
-            <form
-              onSubmit={handleAddWish}
-              className="space-y-2 rounded-2xl border border-zinc-800 bg-zinc-900 p-3"
-            >
+            <div className="flex items-center justify-between">
+              <div>
+                <h2 className="text-base font-bold text-zinc-100">우리둘 위시리스트</h2>
+                <p className="text-[11px] text-zinc-400">
+                  사진 · 링크 첨부 및 카톡 실시간 공유
+                </p>
+              </div>
+              <button
+                onClick={handleShareAllWishes}
+                className="flex items-center gap-1.5 rounded-xl bg-rose-500/20 px-3 py-1.5 text-xs font-semibold text-rose-300 ring-1 ring-rose-500/30 transition hover:bg-rose-500/30"
+                title="위시리스트 전체 공유"
+              >
+                <Share2 className="h-3.5 w-3.5" /> 전체 공유
+              </button>
+            </div>
+
+            {/* 위시리스트 등록 폼: 주체 + 제목 + 장소 + 링크 + 사진 첨부 */}
+            <form onSubmit={handleAddWish} className="space-y-2.5 rounded-2xl border border-zinc-800 bg-zinc-900 p-3.5">
+              <div className="flex items-center justify-between">
+                <span className="text-[11px] font-semibold text-zinc-400">작성 주체 선택</span>
+                <div className="flex gap-1.5">
+                  {(['boyfriend', 'girlfriend']).map((key) => {
+                    const meta = SUBJECT_META[key];
+                    const active = newWishAuthor === key;
+                    return (
+                      <button
+                        type="button"
+                        key={key}
+                        onClick={() => setNewWishAuthor(key)}
+                        className={`rounded-xl px-3 py-1 text-xs transition ${
+                          active ? meta.badge : 'bg-zinc-800 text-zinc-400 hover:bg-zinc-700'
+                        }`}
+                      >
+                        {meta.label}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+
               <input
                 type="text"
+                required
                 value={newWishTitle}
                 onChange={(e) => setNewWishTitle(e.target.value)}
-                placeholder="가고 싶은 맛집, 전시, 여행지"
+                placeholder="가고 싶은 맛집, 여행지, 갖고 싶은 아이템"
                 className="w-full rounded-xl border border-zinc-700 bg-zinc-950 px-3 py-2 text-xs text-zinc-100 placeholder-zinc-500 focus:border-rose-500 focus:outline-none"
               />
-              <div className="flex gap-2">
+
+              <input
+                type="text"
+                value={newWishLoc}
+                onChange={(e) => setNewWishLoc(e.target.value)}
+                placeholder="장소 또는 간단 메모 (선택 입력)"
+                className="w-full rounded-xl border border-zinc-700 bg-zinc-950 px-3 py-2 text-xs text-zinc-100 placeholder-zinc-500 focus:border-rose-500 focus:outline-none"
+              />
+
+              <div className="relative">
+                <LinkIcon className="pointer-events-none absolute left-3 top-2.5 h-3.5 w-3.5 text-zinc-500" />
                 <input
                   type="text"
-                  value={newWishLoc}
-                  onChange={(e) => setNewWishLoc(e.target.value)}
-                  placeholder="위치 (예: 연남동)"
-                  className="flex-1 rounded-xl border border-zinc-700 bg-zinc-950 px-3 py-2 text-xs text-zinc-100 placeholder-zinc-500 focus:border-rose-500 focus:outline-none"
+                  value={newWishLink}
+                  onChange={(e) => setNewWishLink(e.target.value)}
+                  placeholder="참고 링크 붙여넣기 (인스타, 블로그, 네이버지도 등)"
+                  className="w-full rounded-xl border border-zinc-700 bg-zinc-950 py-2 pl-8 pr-3 text-xs text-zinc-100 placeholder-zinc-500 focus:border-rose-500 focus:outline-none"
                 />
-                <button type="submit" className="rounded-xl bg-rose-500 px-4 py-2 text-xs font-semibold text-white">
-                  담기
+              </div>
+
+              {newWishImage && (
+                <div className="relative inline-block overflow-hidden rounded-xl border border-zinc-700">
+                  <img
+                    src={newWishImage}
+                    alt="첨부 미리보기"
+                    className="h-24 w-auto max-w-full object-cover"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setNewWishImage('')}
+                    className="absolute right-1.5 top-1.5 rounded-full bg-black/75 p-1 text-zinc-200 hover:bg-rose-500 hover:text-white"
+                    title="사진 제거"
+                  >
+                    <X className="h-3.5 w-3.5" />
+                  </button>
+                </div>
+              )}
+
+              <div className="flex items-center justify-between gap-2 pt-0.5">
+                <label className="flex cursor-pointer items-center gap-1.5 rounded-xl border border-zinc-700 bg-zinc-950 px-3 py-2 text-xs font-medium text-zinc-300 transition hover:border-zinc-600 hover:bg-zinc-800">
+                  <ImageIcon className="h-3.5 w-3.5 text-rose-400" />
+                  <span>{newWishImage ? '사진 변경' : '사진 첨부'}</span>
+                  <input
+                    type="file"
+                    accept="image/*"
+                    onChange={(e) => handleWishImageSelect(e, false)}
+                    className="hidden"
+                  />
+                </label>
+
+                <button
+                  type="submit"
+                  className="flex-1 rounded-xl bg-rose-500 py-2 text-xs font-semibold text-white shadow-sm transition hover:bg-rose-600"
+                >
+                  위시리스트 등록
                 </button>
               </div>
             </form>
 
-            <div className="space-y-2">
-              {wishes.map((w) => (
-                <div
-                  key={w.id}
-                  className="flex items-center justify-between rounded-2xl border border-zinc-800 bg-zinc-900/90 p-3"
-                >
-                  <div>
-                    <p className="text-xs font-bold text-zinc-100">{w.title}</p>
-                    <p className="text-[11px] text-zinc-400">
-                      {w.location} · {w.author === 'boyfriend' ? '또또 추천' : '뚜뚜 추천'}
-                    </p>
-                  </div>
-                  <button
-                    onClick={() => handleConvertWish(w)}
-                    className="rounded-xl bg-rose-500/20 px-3 py-1.5 text-xs font-semibold text-rose-300 ring-1 ring-rose-500/30 hover:bg-rose-500/30"
-                  >
-                    {selectedDate}에 확정
-                  </button>
-                </div>
-              ))}
-            </div>
+            {/* 위시리스트 카드 목록 */}
+            {wishes.length === 0 ? (
+              <p className="py-6 text-center text-xs text-zinc-500">
+                아직 등록된 위시리스트가 없습니다. 사진이나 링크와 함께 위시를 남겨보세요!
+              </p>
+            ) : (
+              <div className="space-y-2.5">
+                {wishes.map((w) => {
+                  const authorKey = w.author === 'girlfriend' ? 'girlfriend' : 'boyfriend';
+                  const meta = SUBJECT_META[authorKey];
+                  const validLink = formatExternalUrl(w.link);
+
+                  return (
+                    <div
+                      key={w.id}
+                      className={`space-y-2.5 rounded-2xl border p-3 ${meta.card}`}
+                    >
+                      <div className="flex items-start justify-between gap-2">
+                        <div
+                          onClick={() => openEditWishModal(w)}
+                          className="min-w-0 flex-1 cursor-pointer space-y-1.5"
+                        >
+                          <div className="flex items-center gap-1.5">
+                            <span className={`shrink-0 rounded-md px-1.5 py-0.5 text-[10px] ${meta.badge}`}>
+                              {meta.label}
+                            </span>
+                            <p className="break-words text-xs font-bold text-zinc-100">{w.title}</p>
+                          </div>
+
+                          <div className="flex flex-wrap items-center gap-2">
+                            {w.location && (
+                              <a
+                                href={`https://map.naver.com/p/search/${encodeURIComponent(w.location)}`}
+                                target="_blank"
+                                rel="noreferrer"
+                                onClick={(e) => e.stopPropagation()}
+                                className="inline-flex items-center gap-1 text-[11px] text-zinc-300 underline decoration-zinc-500 hover:text-rose-300"
+                              >
+                                <MapPin className="h-3 w-3 text-rose-400" /> {w.location}
+                              </a>
+                            )}
+
+                            {validLink && (
+                              <a
+                                href={validLink}
+                                target="_blank"
+                                rel="noreferrer"
+                                onClick={(e) => e.stopPropagation()}
+                                className="inline-flex items-center gap-1 rounded-lg bg-rose-500/20 px-2 py-0.5 text-[11px] font-semibold text-rose-300 ring-1 ring-rose-500/40 transition hover:bg-rose-500/30"
+                              >
+                                <ExternalLink className="h-3 w-3" /> 링크 열기
+                              </a>
+                            )}
+                          </div>
+                        </div>
+
+                        <div className="flex shrink-0 items-center gap-1">
+                          <button
+                            onClick={() => handleShareWish(w)}
+                            className="flex items-center gap-1 rounded-xl bg-zinc-800/90 px-2 py-1.5 text-[11px] font-semibold text-rose-300 transition hover:bg-zinc-700"
+                            title="이 위시 공유하기"
+                          >
+                            <Share2 className="h-3 w-3" /> 공유
+                          </button>
+                          <button
+                            onClick={() => openEditWishModal(w)}
+                            className="flex items-center gap-1 rounded-xl bg-zinc-800/90 px-2 py-1.5 text-[11px] font-semibold text-zinc-200 transition hover:bg-zinc-700"
+                            title="위시 수정"
+                          >
+                            <Pencil className="h-3 w-3" /> 수정
+                          </button>
+                          <button
+                            onClick={() => handleDeleteWish(w.id)}
+                            className="rounded-xl bg-zinc-800/90 p-1.5 text-zinc-400 transition hover:bg-zinc-700 hover:text-rose-400"
+                            title="위시 삭제"
+                          >
+                            <Trash2 className="h-3.5 w-3.5" />
+                          </button>
+                        </div>
+                      </div>
+
+                      {w.imageUrl && (
+                        <div className="overflow-hidden rounded-xl border border-zinc-800/80 bg-zinc-950/60">
+                          <img
+                            src={w.imageUrl}
+                            alt={w.title}
+                            onClick={() => setPreviewImage(w.imageUrl)}
+                            className="max-h-48 w-full cursor-zoom-in object-cover transition hover:opacity-95"
+                          />
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            )}
           </div>
         )}
 
@@ -806,7 +1196,7 @@ export default function App() {
               <p className="text-xs opacity-90">또또 ♥ 뚜뚜 함께한 시간</p>
               <p className="mt-1 text-2xl font-extrabold">{dDayCount}</p>
               <div className="mt-2 flex items-center gap-2 text-xs">
-                <span>사귄 날:</span>
+                <span>처음 만난 날:</span>
                 <input
                   type="date"
                   value={startDate}
@@ -816,10 +1206,7 @@ export default function App() {
               </div>
             </div>
 
-            <form
-              onSubmit={handleAddMemory}
-              className="space-y-2 rounded-2xl border border-zinc-800 bg-zinc-900 p-3"
-            >
+            <form onSubmit={handleAddMemory} className="space-y-2 rounded-2xl border border-zinc-800 bg-zinc-900 p-3">
               <input
                 type="text"
                 value={newMemTitle}
@@ -899,7 +1286,6 @@ export default function App() {
         )}
       </main>
 
-      {/* Bottom Tab Navigation */}
       <nav className="fixed bottom-0 left-1/2 z-20 flex w-full max-w-md -translate-x-1/2 border-t border-zinc-800/90 bg-zinc-950/95 px-2 py-2 backdrop-blur">
         {[
           { id: 'calendar', icon: CalendarIcon, label: '캘린더' },
@@ -924,21 +1310,22 @@ export default function App() {
         })}
       </nav>
 
-      {/* Add Event Modal */}
-      {showAddModal && (
+      {/* 캘린더 일정 추가 / 수정 모달 */}
+      {showEventModal && (
         <div className="fixed inset-0 z-40 flex items-end justify-center bg-black/70 p-4 backdrop-blur-sm sm:items-center">
           <form
-            onSubmit={handleCreateEvent}
+            onSubmit={handleSaveEvent}
             className="w-full max-w-md space-y-3.5 rounded-3xl border border-zinc-800 bg-zinc-900 p-5 shadow-2xl"
           >
             <div className="flex items-center justify-between">
-              <h3 className="text-sm font-bold text-zinc-100">{selectedDate} 새 일정 등록</h3>
-              <button type="button" onClick={() => setShowAddModal(false)}>
+              <h3 className="text-sm font-bold text-zinc-100">
+                {editingEventId ? '등록된 일정 수정' : `${selectedDate} 새 일정 등록`}
+              </h3>
+              <button type="button" onClick={() => setShowEventModal(false)}>
                 <X className="h-4 w-4 text-zinc-400 hover:text-zinc-200" />
               </button>
             </div>
 
-            {/* 주체자 선택 버튼: 또또 / 뚜뚜 / 함께 */}
             <div className="space-y-1.5">
               <label className="text-[11px] font-semibold text-zinc-400">주체자</label>
               <div className="grid grid-cols-3 gap-1.5">
@@ -971,31 +1358,167 @@ export default function App() {
 
             <div className="grid grid-cols-2 gap-2">
               <input
+                type="date"
+                value={eventDateInput}
+                onChange={(e) => setEventDateInput(e.target.value)}
+                className="rounded-xl border border-zinc-700 bg-zinc-950 px-3 py-2 text-xs text-zinc-100 focus:border-rose-500 focus:outline-none"
+              />
+              <input
                 type="time"
                 value={newTime}
                 onChange={(e) => setNewTime(e.target.value)}
                 className="rounded-xl border border-zinc-700 bg-zinc-950 px-3 py-2 text-xs text-zinc-100 focus:border-rose-500 focus:outline-none"
               />
+            </div>
+
+            <input
+              type="text"
+              value={newLocation}
+              onChange={(e) => setNewLocation(e.target.value)}
+              placeholder="장소 (지도 연동 · 선택 입력)"
+              className="w-full rounded-xl border border-zinc-700 bg-zinc-950 px-3 py-2 text-xs text-zinc-100 placeholder-zinc-500 focus:border-rose-500 focus:outline-none"
+            />
+
+            <button
+              type="submit"
+              className="w-full rounded-2xl bg-rose-500 py-3 text-xs font-bold text-white shadow-lg shadow-rose-500/20 hover:bg-rose-600"
+            >
+              {editingEventId
+                ? `[${SUBJECT_META[newCategory].label}] 일정 수정 저장`
+                : `[${SUBJECT_META[newCategory].label}] 일정 등록하기`}
+            </button>
+          </form>
+        </div>
+      )}
+
+      {/* 위시리스트 수정 모달 (사진 및 링크 수정 지원) */}
+      {showWishEditModal && (
+        <div className="fixed inset-0 z-40 flex items-end justify-center bg-black/70 p-4 backdrop-blur-sm sm:items-center">
+          <form
+            onSubmit={handleSaveWishEdit}
+            className="w-full max-w-md space-y-3.5 rounded-3xl border border-zinc-800 bg-zinc-900 p-5 shadow-2xl"
+          >
+            <div className="flex items-center justify-between">
+              <h3 className="text-sm font-bold text-zinc-100">위시리스트 수정</h3>
+              <button type="button" onClick={() => setShowWishEditModal(false)}>
+                <X className="h-4 w-4 text-zinc-400 hover:text-zinc-200" />
+              </button>
+            </div>
+
+            <div className="space-y-1.5">
+              <label className="text-[11px] font-semibold text-zinc-400">작성 주체</label>
+              <div className="grid grid-cols-2 gap-1.5">
+                {(['boyfriend', 'girlfriend']).map((key) => {
+                  const meta = SUBJECT_META[key];
+                  return (
+                    <button
+                      type="button"
+                      key={key}
+                      onClick={() => setEditWishAuthor(key)}
+                      className={`rounded-xl py-2 text-xs transition ${
+                        editWishAuthor === key ? meta.badge : 'bg-zinc-800 text-zinc-400 hover:bg-zinc-700'
+                      }`}
+                    >
+                      {meta.label}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+
+            <input
+              type="text"
+              required
+              value={editWishTitle}
+              onChange={(e) => setEditWishTitle(e.target.value)}
+              placeholder="위시리스트 내용"
+              className="w-full rounded-xl border border-zinc-700 bg-zinc-950 px-3 py-2.5 text-xs text-zinc-100 placeholder-zinc-500 focus:border-rose-500 focus:outline-none"
+            />
+
+            <input
+              type="text"
+              value={editWishLoc}
+              onChange={(e) => setEditWishLoc(e.target.value)}
+              placeholder="장소 또는 메모 (선택 입력)"
+              className="w-full rounded-xl border border-zinc-700 bg-zinc-950 px-3 py-2 text-xs text-zinc-100 placeholder-zinc-500 focus:border-rose-500 focus:outline-none"
+            />
+
+            <div className="relative">
+              <LinkIcon className="pointer-events-none absolute left-3 top-2.5 h-3.5 w-3.5 text-zinc-500" />
               <input
                 type="text"
-                value={newLocation}
-                onChange={(e) => setNewLocation(e.target.value)}
-                placeholder="장소 (지도 연동)"
-                className="rounded-xl border border-zinc-700 bg-zinc-950 px-3 py-2 text-xs text-zinc-100 placeholder-zinc-500 focus:border-rose-500 focus:outline-none"
+                value={editWishLink}
+                onChange={(e) => setEditWishLink(e.target.value)}
+                placeholder="참고 링크 (https://...)"
+                className="w-full rounded-xl border border-zinc-700 bg-zinc-950 py-2 pl-8 pr-3 text-xs text-zinc-100 placeholder-zinc-500 focus:border-rose-500 focus:outline-none"
               />
+            </div>
+
+            <div className="space-y-2">
+              {editWishImage && (
+                <div className="relative inline-block overflow-hidden rounded-xl border border-zinc-700">
+                  <img
+                    src={editWishImage}
+                    alt="수정 미리보기"
+                    className="h-28 w-auto max-w-full object-cover"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setEditWishImage('')}
+                    className="absolute right-1.5 top-1.5 rounded-full bg-black/75 p-1 text-zinc-200 hover:bg-rose-500 hover:text-white"
+                    title="사진 삭제"
+                  >
+                    <X className="h-3.5 w-3.5" />
+                  </button>
+                </div>
+              )}
+
+              <div>
+                <label className="inline-flex cursor-pointer items-center gap-1.5 rounded-xl border border-zinc-700 bg-zinc-950 px-3 py-2 text-xs font-medium text-zinc-300 transition hover:bg-zinc-800">
+                  <ImageIcon className="h-3.5 w-3.5 text-rose-400" />
+                  <span>{editWishImage ? '다른 사진으로 변경' : '사진 첨부하기'}</span>
+                  <input
+                    type="file"
+                    accept="image/*"
+                    onChange={(e) => handleWishImageSelect(e, true)}
+                    className="hidden"
+                  />
+                </label>
+              </div>
             </div>
 
             <button
               type="submit"
               className="w-full rounded-2xl bg-rose-500 py-3 text-xs font-bold text-white shadow-lg shadow-rose-500/20 hover:bg-rose-600"
             >
-              [{SUBJECT_META[newCategory].label}] 일정 등록하기
+              수정 내용 저장하기
             </button>
           </form>
         </div>
       )}
 
-      {/* Notification Preview Modal */}
+      {/* 첨부 사진 원본 확대 모달 */}
+      {previewImage && (
+        <div
+          onClick={() => setPreviewImage(null)}
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/85 p-4 backdrop-blur-sm"
+        >
+          <div className="relative max-h-[85vh] max-w-md overflow-hidden rounded-2xl border border-zinc-800 bg-zinc-950 shadow-2xl">
+            <button
+              onClick={() => setPreviewImage(null)}
+              className="absolute right-2.5 top-2.5 rounded-full bg-black/75 p-1.5 text-zinc-200 hover:bg-rose-500 hover:text-white"
+            >
+              <X className="h-4 w-4" />
+            </button>
+            <img
+              src={previewImage}
+              alt="확대 이미지"
+              className="max-h-[80vh] w-auto object-contain"
+            />
+          </div>
+        </div>
+      )}
+
       {showNotifModal && (
         <div className="fixed inset-0 z-40 flex items-center justify-center bg-black/70 p-4 backdrop-blur-sm">
           <div className="w-full max-w-md space-y-3 rounded-3xl border border-zinc-800 bg-zinc-900 p-5 shadow-2xl">
